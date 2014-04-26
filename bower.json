@@ -1,0 +1,11 @@
+{
+    "name": "angular-form-validation",
+    "description": "AngularJS module to automate form validations",
+    "version": "1.0.0",
+    "main": "src/angular-form-validation.js",
+    "dependencies": {
+        "angular": "1.2.16"
+    },
+    "devDependencies": {
+    }
+}
