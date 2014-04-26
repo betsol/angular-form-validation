@@ -25,7 +25,11 @@ var application = angular.module('application', [
 
 ## Usage
 
-This documentation is still in development.
+This section is still in development.
+
+## Public API
+
+This section is still in development.
 
 ## Plans for the future
 
@@ -37,6 +41,7 @@ If you have found a bug - please create an issue in this GitHub repository.
 
 If you have a question - file it with [StackOverflow][so-ask] and send me a
 link to [s.fomin@betsol.ru][email].
+Also, please add a [JSFiddle][jsfiddle] to demonstrate the issue if appropriate.
 
 Have any ideas or propositions? Feel free to contact me by the same [E-Mail address][email].
 
@@ -68,3 +73,4 @@ THE SOFTWARE.
 
 [so-ask]: http://stackoverflow.com/questions/ask?tags=angularjs,javascript
 [email]: mailto:s.fomin@betsol.ru
+[jsfiddle]: http://jsfiddle.net/
