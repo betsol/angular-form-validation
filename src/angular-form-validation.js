@@ -6,9 +6,12 @@
 
     // Registering AngularJS module.
     angular.module('ngFormValidation', ['ng'])
-        .service('formValidationRegistration', registrationService)
         .provider('formValidationDecorations', decorationsProvider)
         .provider('formValidationErrors', errorsProvider)
+        .service('formValidationRegistration', [
+            'formValidationDecorations', 'formValidationErrors',
+            registrationService
+        ])
         .directive('input', formValidationDirectiveSpecification)
         .directive('textarea', formValidationDirectiveSpecification)
         .directive('select', formValidationDirectiveSpecification)
@@ -16,10 +19,10 @@
 
     /**
      * Form validation directive.
-     * @param {object} registrationService
+     * @param {object} formValidationRegistration
      * @returns {object}
      */
-    function formValidationDirective(registrationService)
+    function formValidationDirective(formValidationRegistration)
     {
         return {
             restrict: 'E',
@@ -28,7 +31,7 @@
                 var ngModel = controllers[0];
                 var ngForm = controllers[1];
                 if (null !== ngModel && null !== ngForm) {
-                    registrationService
+                    formValidationRegistration
                         .register(scope, element, attrs, ngModel, ngForm)
                     ;
                 }
