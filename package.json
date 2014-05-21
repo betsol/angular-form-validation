@@ -1,0 +1,24 @@
+{
+  "name": "angular-form-validation",
+  "version": "1.0.0",
+  "description": "AngularJS module to automate form validations",
+  "main": "dist/angular-form-validation.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/betsol/angular-form-validation.git"
+  },
+  "author": "Slava Fomin II",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/betsol/angular-form-validation/issues"
+  },
+  "homepage": "https://github.com/betsol/angular-form-validation",
+  "devDependencies": {
+    "gulp": "^3.6.2",
+    "gulp-file-include": "^0.3.1",
+    "gulp-rename": "^1.2.0",
+    "gulp-clean": "^0.2.4",
+    "gulp-uglify": "^0.3.0",
+    "gulp-util": "^2.2.14"
+  }
+}
