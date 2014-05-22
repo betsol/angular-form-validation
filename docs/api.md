@@ -9,7 +9,7 @@ Below you will find complete documentation for all providers.
 
 **Notice:**
 
-All setters of all providers will return the provider back to you in order to support chainability.
+All setters of these providers will return the provider back to you in order to support chainability.
 
 **Example:**
 
@@ -21,17 +21,6 @@ someProvider
 ;
 ```
 
-## [formValidationDecorationsProvider][decorations-provider]
-
-This provider is used to configure how form elements are decorated.
-
-Please consult it's own [detailed documentation][decorations-provider].
-
-## [formValidationErrorsProvider][errors-provider]
-
-This provider is used to configure how form errors are displayed.
-
-Please consult it's own [detailed documentation][errors-provider].
 
 [decorations-provider]: api/decorations-provider.md
 [errors-provider]: api/errors-provider.md

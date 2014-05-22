@@ -21,10 +21,12 @@ your application will automatically benefit from it.
 - Automatically adds error messages to invalid input fields
 - Supports translations (i18n) and provides some [built-in languages][built-in-languages]
 - Designed with flexibility in mind, almost every aspect of this module
-  can be configured and overridden (see the API section of this document)
+  can be configured and overridden (see [the API section][docs-api] of this document)
 - You can easily select DOM elements to decorate by providing custom traversing functions
 - You can change the way forms are decorated by overriding some aspects of existing decorators or
   by providing your own implementation of them
+- You can change the way error list is rendered by modifying default error list renderer or
+  by providing your own implementation
 
 ## Installation
 
@@ -45,7 +47,7 @@ This library requires [`angular-input-modified`][github-input-modified] module. 
 Use minified version: `angular-form-validation.min.js` in production
 and uncompressed version: `angular-form-validation.js` during development/testing.
 
-Also, don't forget to add dependencies, see [Dependencies][#dependencies] section above.
+Also, don't forget to add dependencies, see [Dependencies](#dependencies) section above.
 
 ### Add dependency in your application's module definition
 
@@ -120,7 +122,7 @@ THE SOFTWARE.
 [email]: mailto:s.fomin@betsol.ru
 [jsfiddle]: http://jsfiddle.net/
 [github-input-modified]: ~
-[docs-api]: ~
+[docs-api]: docs/api.md
 [demo]: ~
-[new-issue]: ~
+[new-issue]: issues/new
 [built-in-languages]: docs/api/errors-provider.md#supported-languages

@@ -1,6 +1,6 @@
 # BootstrapDecorator
 
-An extension of `ClassNameDecorator` that is available under `bootstrap` alias.
+An extension of [ClassNameDecorator][decorator-className] that is available under `bootstrap` alias.
 
 This decorator allows you to style your forms according to [Bootstrap 3][bootstrap-3-forms-validation]
 library form validation. It provides `form-group` validation classes and icons.

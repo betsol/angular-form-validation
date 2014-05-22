@@ -4,11 +4,10 @@ This provider is used to configure how form elements are decorated.
 
 When one of the form's input state changes from **valid** to **invalid** or to **not modified**,
 the special object called **decorator** is called to actually decorate the form.
-We are providing some useful built-in decorators that can be
+We are providing some useful built-in decorators that you can employ in your projects.
 
-It is possible
-to override some aspects of built-in decorators if you do not want to create your own decorator
-from scratch, or if you only want to change some little detail of it.
+It is possible to override some aspects of built-in decorators if you do not want to
+create your own decorator from scratch, or if you only want to change some little detail of it.
 
 ## Built-in decorators
 
@@ -24,7 +23,7 @@ Consult their individual documentation for details.
 ### {object} decorator: useBuiltInDecorator({string} decoratorName)
 
 Use this method to select one of built-in decorators for use.
-See the [list of built-in decorators][#built-in-decorators].
+See the [list of built-in decorators](#built-in-decorators).
 
 #### Input
 
