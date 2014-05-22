@@ -4,84 +4,224 @@
  */
 function BootstrapDecorator() {
 
-    // Extending ClassNameDecorator.
-    var decorator = new ClassNameDecorator();
-
+    var validClassName = 'has-success';
+    var invalidClassName = 'has-error';
     var elementClassName = 'has-feedback';
-    var iconElementName = 'span';
+    var iconElementType = 'span';
     var iconClassName = 'form-control-feedback';
+    var formGroupClassName = 'form-group';
 
-    //var iconValidClassName = 'glyphicon glyphicon-ok';
-    //var iconInvalidClassName = 'glyphicon glyphicon-remove';
-
-    var iconValidClassName = 'fa fa-check';
-    var iconInvalidClassName = 'fa fa-exclamation-circle';
-
+    var iconLibrary = 'glyphicon';
     var useIcons = true;
-
-    // Saving parent function for future calls.
-    var classNameDecorate = decorator.decorateElement;
-    var classNameClearDecorations = decorator.clearDecorations;
-
-    var getExistingIconElement = function($container) {
-        var $iconElement = $container.find(iconElementName + '.' + iconClassName);
-        return ($iconElement.length > 0 ? $iconElement : null);
+    var iconClasses = {
+        glyphicons: {
+            valid: 'glyphicon glyphicon-ok',
+            invalid: 'glyphicon glyphicon-remove'
+        },
+        fontawesome: {
+            valid: 'fa fa-check',
+            invalid: 'fa fa-exclamation-circle'
+        }
     };
 
-    var createIconElement = function($container) {
-        var $iconElement = $('<' + iconElementName + '>')
-            .addClass(iconClassName)
-        ;
-        $container.append($iconElement);
-        return $iconElement;
+    var formGroupTraverser = function($inputElement) {
+        return $inputElement.parents('.' + formGroupClassName);
     };
 
-    decorator.decorateElement = function($decoratedElement, valid) {
-        // Calling parent function.
-        classNameDecorate.apply(this, arguments);
+    var iconValidClassName;
+    var iconInvalidClassName;
 
-        // Decorating icons.
-        if (useIcons) {
+    // Creating ClassNameDecorator's instance to extend it.
+    var classNameDecorator = new ClassNameDecorator();
 
-            // Making sure class is present for container.
-            $decoratedElement.addClass(elementClassName);
+    // Setting default class names used in Bootstrap.
+    classNameDecorator.setValidClassName(validClassName);
+    classNameDecorator.setInvalidClassName(invalidClassName);
+    classNameDecorator.useTraverser(formGroupTraverser);
 
-            // Looking for existing icon element.
-            var $iconElement = getExistingIconElement($decoratedElement);
-            if (!$iconElement) {
-                // Creating new icon element if it's missing.
-                $iconElement = createIconElement($decoratedElement);
-            }
+    var bootstrapDecorator = {
 
-            // Making sure proper class is set for icon element.
+        //-----------------------//
+        // CONFIGURATION SECTION //
+        //-----------------------//
+
+        /**
+         * Specifies whether to use icons.
+         *
+         * @param {boolean} _useIcons
+         * @returns {BootstrapDecorator}
+         */
+        useIcons: function(_useIcons) {
+            useIcons = _useIcons;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Specifies name of the icon library to use.
+         *
+         * @param {string} _iconLibrary
+         * @returns {BootstrapDecorator}
+         */
+        useIconLibrary: function(_iconLibrary) {
+            iconLibrary = _iconLibrary;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Sets icon valid class name.
+         *
+         * @param {string} className
+         * @returns {BootstrapDecorator}
+         */
+        setIconValidClassName: function(className) {
+            iconValidClassName = className;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Sets icon invalid class name.
+         *
+         * @param className
+         * @returns {BootstrapDecorator}
+         */
+        setIconInvalidClassName: function(className) {
+            iconInvalidClassName = className;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        //-------------//
+        // API SECTION //
+        //-------------//
+
+        /**
+         * Returns icon class name according to specified state.
+         *
+         * @param {boolean} valid
+         * @returns {string}
+         */
+        getIconClassName: function(valid) {
             if (valid) {
-                $iconElement
-                    .removeClass(iconInvalidClassName)
-                    .addClass(iconValidClassName)
-                ;
+                if ('undefined' !== typeof iconValidClassName) {
+                    return iconValidClassName;
+                } else {
+                    return iconClasses[iconLibrary]['valid'];
+                }
             } else {
-                $iconElement
-                    .removeClass(iconValidClassName)
-                    .addClass(iconInvalidClassName)
+                if ('undefined' !== typeof iconInvalidClassName) {
+                    return iconInvalidClassName;
+                } else {
+                    return iconClasses[iconLibrary]['invalid'];
+                }
+            }
+        },
+
+        /**
+         * Gets existing icon element from the specified container.
+         *
+         * @param {jQuery} $container
+         * @returns {jQuery|null}
+         */
+        getExistingIconElement: function($container) {
+            var $iconElement = $container.find(iconElementType + '.' + iconClassName);
+            return ($iconElement.length > 0 ? $iconElement : null);
+        },
+
+        /**
+         * Creates new icon element inside of a specified container
+         * and returns it.
+         *
+         * @param {jQuery} $container
+         * @returns {jQuery}
+         */
+        createIconElement: function($container) {
+            var $iconElement = $('<' + iconElementType + '>')
+                    .addClass(iconClassName)
                 ;
+            $container.append($iconElement);
+            return $iconElement;
+        },
+
+        /**
+         * Shows specified icon element.
+         *
+         * @param {jQuery} $iconElement
+         * @returns {BootstrapDecorator}
+         */
+        showIconElement: function($iconElement) {
+            showElement($iconElement);
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Hides specified icon element.
+         *
+         * @param {jQuery} $iconElement
+         * @returns {BootstrapDecorator}
+         */
+        hideIconElement: function($iconElement) {
+            hideElement($iconElement);
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Decorates specified element according to specified state.
+         *
+         * @param {jQuery} $inputElement
+         * @param {boolean} valid
+         */
+        decorateElement: function($inputElement, valid) {
+            // Calling parent function.
+            classNameDecorator.decorateElement.apply(this, arguments);
+
+            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+
+            // Decorating icons.
+            if (useIcons) {
+
+                // Making sure class is present for container.
+                $decoratedElement.addClass(elementClassName);
+
+                // Looking for existing icon element.
+                var $iconElement = this.getExistingIconElement($decoratedElement);
+                if (!$iconElement) {
+                    // Creating new icon element if it's missing.
+                    $iconElement = this.createIconElement($decoratedElement);
+                }
+
+                // Making sure proper class is set for icon element.
+                $iconElement
+                    .removeClass(this.getIconClassName(!valid))
+                    .addClass(this.getIconClassName(valid))
+                ;
+
+                // Making sure icon element is shown.
+                this.showIconElement($iconElement);
+            }
+        },
+
+        /**
+         * Removes all decorations from the specified element.
+         *
+         * @param {jQuery} $inputElement
+         */
+        clearDecorations: function($inputElement) {
+            classNameDecorator.clearDecorations.apply(this, arguments);
+            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+            if (useIcons) {
+                var $iconElement = this.getExistingIconElement($decoratedElement);
+                if ($iconElement) {
+                    this.hideIconElement($iconElement);
+                }
             }
         }
     };
 
-    decorator.clearDecorations = function($decoratedElement) {
-        classNameClearDecorations.apply(this, arguments);
-        if (useIcons) {
-            var $iconElement = getExistingIconElement($decoratedElement);
-            if ($iconElement) {
-                $iconElement.remove();
-            }
-        }
-    };
-
-    // Setting classnames used in Bootstrap.
-    decorator.setValidClassName('has-success');
-    decorator.setInvalidClassName('has-error');
-
-    // Returning modified instance.
-    return decorator;
+    // Creating a final instance by extending class name decorator with bootstrap one.
+    return angular.extend({}, classNameDecorator, bootstrapDecorator);
 }

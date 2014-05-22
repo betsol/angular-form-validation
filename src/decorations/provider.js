@@ -14,28 +14,6 @@ function decorationsProvider() {
     var decorator = null;
 
     /**
-     * Default traverser implementation.
-     *
-     * @param {jQuery} $inputElement
-     * @returns {*}
-     */
-    var traverser = function($inputElement) {
-        return $inputElement;
-    };
-
-    /**
-     * Sets traversing function.
-     * @param {function} _traverser
-     */
-    self.setTraverser = function(_traverser) {
-        //noinspection JSValidateTypes
-        traverser = _traverser;
-
-        // Maintaining chainability.
-        return self;
-    };
-
-    /**
      * Instructs directives to use one of built-in decorators:
      *   - default   (Default decorator, alias of "className")
      *   - className (Applies CSS classes)
@@ -72,6 +50,9 @@ function decorationsProvider() {
      */
     self.setDecorator = function(_decorator) {
         decorator = _decorator;
+
+        // Maintaining chainability.
+        return self;
     };
 
     /**
@@ -79,12 +60,7 @@ function decorationsProvider() {
      */
     self.$get = function() {
         return {
-            attach: function(scope, element, attrs, ngModel, ngForm, scopePath) {
-
-                // Traversing DOM to find element that will be decorated.
-                // Called only once for each input.
-                // User-specified traversing function can be used.
-                var decoratedElement = traverser(element);
+            attach: function($scope, $element, attrs, ngModel, ngForm, scopePath) {
 
                 /**
                  * This function will determine input's state and re-decorate it accordingly.
@@ -97,25 +73,25 @@ function decorationsProvider() {
                     // If input is invalid.
                     if (ngModel.$invalid) {
                         // Decorating element as invalid.
-                        decorator.decorateElement(decoratedElement, false);
+                        decorator.decorateElement($element, false);
                     // If input is valid and value has changed.
                     } else if (ngModel.modified) {
                         // Decorating element as valid.
-                        decorator.decorateElement(decoratedElement, true);
+                        decorator.decorateElement($element, true);
                     } else {
                         // Removing all decorations if it's valid and not modified.
-                        decorator.clearDecorations(decoratedElement);
+                        decorator.clearDecorations($element);
                     }
                 };
 
                 // Re-decorating the element when it's state changes.
-                scope.$watch(scopePath + '.$valid',    redecorateElement);
-                scope.$watch(scopePath + '.$pristine', redecorateElement);
-                scope.$watch(scopePath + '.modified',  redecorateElement);
+                $scope.$watch(scopePath + '.$valid',    redecorateElement);
+                $scope.$watch(scopePath + '.$pristine', redecorateElement);
+                $scope.$watch(scopePath + '.modified',  redecorateElement);
             }
         };
     };
 }
 
-// @@include('decorators/classname.js')
-// @@include('decorators/bootstrap.js')
+// @@include('decorations/decorators/classname.js')
+// @@include('decorations/decorators/bootstrap.js')

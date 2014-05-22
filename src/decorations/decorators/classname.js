@@ -3,36 +3,89 @@
  */
 function ClassNameDecorator() {
 
-    var invalidClassName = 'invalid';
     var validClassName   = 'valid';
+    var invalidClassName = 'invalid';
+
+    var traverser;
 
     return {
+
+        /**
+         * Returns decorated element by specified element.
+         * Uses traverser if possible.
+         *
+         * @param {jQuery} $inputElement
+         * @returns {jQuery}
+         */
+        getDecoratedElement: function($inputElement) {
+            if ('function' === typeof traverser) {
+                return traverser($inputElement);
+            } else {
+                return $inputElement;
+            }
+        },
+
+        /**
+         * Sets valid class name.
+         *
+         * @param {string} className
+         * @returns {ClassNameDecorator}
+         */
         setValidClassName: function(className) {
             validClassName = className;
             return this;
         },
 
+        /**
+         * Sets invalid class name.
+         *
+         * @param {string} className
+         * @returns {ClassNameDecorator}
+         */
         setInvalidClassName: function(className) {
             invalidClassName = className;
             return this;
         },
 
-        decorateElement: function(element, valid) {
+        /**
+         * Instructs decorator to use specified traverser.
+         *
+         * @param {function} _traverser
+         * @returns {ClassNameDecorator}
+         */
+        useTraverser: function(_traverser) {
+            traverser = _traverser;
+            return this;
+        },
+
+        /**
+         * Decorates specified element.
+         *
+         * @param {jQuery} $inputElement
+         * @param {boolean} valid
+         */
+        decorateElement: function($inputElement, valid) {
+            var $decoratedElement = this.getDecoratedElement($inputElement);
             if (valid) {
-                element
+                $decoratedElement
                     .removeClass(invalidClassName)
                     .addClass(validClassName)
                 ;
             } else {
-                element
+                $decoratedElement
                     .removeClass(validClassName)
                     .addClass(invalidClassName)
                 ;
             }
         },
 
-        clearDecorations: function(element) {
-            element
+        /**
+         * Removes all decorations from the specified element.
+         *
+         * @param {jQuery} $inputElement
+         */
+        clearDecorations: function($inputElement) {
+            this.getDecoratedElement($inputElement)
                 .removeClass(invalidClassName)
                 .removeClass(validClassName)
             ;

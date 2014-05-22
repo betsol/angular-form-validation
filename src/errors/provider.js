@@ -2,6 +2,7 @@
  * Provider for validation errors service.
  */
 function errorsProvider() {
+
     var self = this;
 
     var traverser;
@@ -14,7 +15,7 @@ function errorsProvider() {
      *
      * @param {function} _traverser
      */
-    self.setTraverser = function (_traverser) {
+    self.useTraverser = function (_traverser) {
         // noinspection JSValidateTypes
         traverser = _traverser;
 

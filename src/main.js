@@ -73,8 +73,8 @@
         };
     }
 
-    // @@include('decorations/main.js')
-    // @@include('errors/main.js')
+    // @@include('decorations/provider.js')
+    // @@include('errors/provider.js')
     // @@include('utils.js')
 
 })(window, angular);

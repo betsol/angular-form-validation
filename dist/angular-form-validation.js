@@ -89,28 +89,6 @@ function decorationsProvider() {
     var decorator = null;
 
     /**
-     * Default traverser implementation.
-     *
-     * @param {jQuery} inputElement
-     * @returns {*}
-     */
-    var traverser = function(inputElement) {
-        return inputElement;
-    };
-
-    /**
-     * Sets traversing function.
-     * @param {function} _traverser
-     */
-    self.setTraverser = function(_traverser) {
-        //noinspection JSValidateTypes
-        traverser = _traverser;
-
-        // Maintaining chainability.
-        return self;
-    };
-
-    /**
      * Instructs directives to use one of built-in decorators:
      *   - default   (Default decorator, alias of "className")
      *   - className (Applies CSS classes)
@@ -147,6 +125,9 @@ function decorationsProvider() {
      */
     self.setDecorator = function(_decorator) {
         decorator = _decorator;
+
+        // Maintaining chainability.
+        return self;
     };
 
     /**
@@ -154,12 +135,7 @@ function decorationsProvider() {
      */
     self.$get = function() {
         return {
-            attach: function(scope, element, attrs, ngModel, ngForm, scopePath) {
-
-                // Traversing DOM to find element that will be decorated.
-                // Called only once for each input.
-                // User-specified traversing function can be used.
-                var decoratedElement = traverser(element);
+            attach: function($scope, $element, attrs, ngModel, ngForm, scopePath) {
 
                 /**
                  * This function will determine input's state and re-decorate it accordingly.
@@ -172,29 +148,353 @@ function decorationsProvider() {
                     // If input is invalid.
                     if (ngModel.$invalid) {
                         // Decorating element as invalid.
-                        decorator.decorateElement(decoratedElement, false);
+                        decorator.decorateElement($element, false);
                     // If input is valid and value has changed.
                     } else if (ngModel.modified) {
                         // Decorating element as valid.
-                        decorator.decorateElement(decoratedElement, true);
+                        decorator.decorateElement($element, true);
                     } else {
                         // Removing all decorations if it's valid and not modified.
-                        decorator.clearDecorations(decoratedElement);
+                        decorator.clearDecorations($element);
                     }
                 };
 
                 // Re-decorating the element when it's state changes.
-                scope.$watch(scopePath + '.$valid',    redecorateElement);
-                scope.$watch(scopePath + '.$pristine', redecorateElement);
-                scope.$watch(scopePath + '.modified',  redecorateElement);
+                $scope.$watch(scopePath + '.$valid',    redecorateElement);
+                $scope.$watch(scopePath + '.$pristine', redecorateElement);
+                $scope.$watch(scopePath + '.modified',  redecorateElement);
             }
         };
     };
 }
+
+/**
+ * @constructor
+ */
+function ClassNameDecorator() {
+
+    var validClassName   = 'valid';
+    var invalidClassName = 'invalid';
+
+    var traverser;
+
+    return {
+
+        /**
+         * Returns decorated element by specified element.
+         * Uses traverser if possible.
+         *
+         * @param {jQuery} $inputElement
+         * @returns {jQuery}
+         */
+        getDecoratedElement: function($inputElement) {
+            if ('function' === typeof traverser) {
+                return traverser($inputElement);
+            } else {
+                return $inputElement;
+            }
+        },
+
+        /**
+         * Sets valid class name.
+         *
+         * @param {string} className
+         * @returns {ClassNameDecorator}
+         */
+        setValidClassName: function(className) {
+            validClassName = className;
+            return this;
+        },
+
+        /**
+         * Sets invalid class name.
+         *
+         * @param {string} className
+         * @returns {ClassNameDecorator}
+         */
+        setInvalidClassName: function(className) {
+            invalidClassName = className;
+            return this;
+        },
+
+        /**
+         * Instructs decorator to use specified traverser.
+         *
+         * @param {function} _traverser
+         * @returns {ClassNameDecorator}
+         */
+        useTraverser: function(_traverser) {
+            traverser = _traverser;
+            return this;
+        },
+
+        /**
+         * Decorates specified element.
+         *
+         * @param {jQuery} $inputElement
+         * @param {boolean} valid
+         */
+        decorateElement: function($inputElement, valid) {
+            var $decoratedElement = this.getDecoratedElement($inputElement);
+            if (valid) {
+                $decoratedElement
+                    .removeClass(invalidClassName)
+                    .addClass(validClassName)
+                ;
+            } else {
+                $decoratedElement
+                    .removeClass(validClassName)
+                    .addClass(invalidClassName)
+                ;
+            }
+        },
+
+        /**
+         * Removes all decorations from the specified element.
+         *
+         * @param {jQuery} $inputElement
+         */
+        clearDecorations: function($inputElement) {
+            this.getDecoratedElement($inputElement)
+                .removeClass(invalidClassName)
+                .removeClass(validClassName)
+            ;
+        }
+    };
+}
+/**
+ * @constructor
+ * @extends ClassNameDecorator
+ */
+function BootstrapDecorator() {
+
+    var validClassName = 'has-success';
+    var invalidClassName = 'has-error';
+    var elementClassName = 'has-feedback';
+    var iconElementType = 'span';
+    var iconClassName = 'form-control-feedback';
+    var formGroupClassName = 'form-group';
+
+    var iconLibrary = 'glyphicon';
+    var useIcons = true;
+    var iconClasses = {
+        glyphicons: {
+            valid: 'glyphicon glyphicon-ok',
+            invalid: 'glyphicon glyphicon-remove'
+        },
+        fontawesome: {
+            valid: 'fa fa-check',
+            invalid: 'fa fa-exclamation-circle'
+        }
+    };
+
+    var formGroupTraverser = function($inputElement) {
+        return $inputElement.parents('.' + formGroupClassName);
+    };
+
+    var iconValidClassName;
+    var iconInvalidClassName;
+
+    // Creating ClassNameDecorator's instance to extend it.
+    var classNameDecorator = new ClassNameDecorator();
+
+    // Setting default class names used in Bootstrap.
+    classNameDecorator.setValidClassName(validClassName);
+    classNameDecorator.setInvalidClassName(invalidClassName);
+    classNameDecorator.useTraverser(formGroupTraverser);
+
+    var bootstrapDecorator = {
+
+        //-----------------------//
+        // CONFIGURATION SECTION //
+        //-----------------------//
+
+        /**
+         * Specifies whether to use icons.
+         *
+         * @param {boolean} _useIcons
+         * @returns {BootstrapDecorator}
+         */
+        useIcons: function(_useIcons) {
+            useIcons = _useIcons;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Specifies name of the icon library to use.
+         *
+         * @param {string} _iconLibrary
+         * @returns {BootstrapDecorator}
+         */
+        useIconLibrary: function(_iconLibrary) {
+            iconLibrary = _iconLibrary;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Sets icon valid class name.
+         *
+         * @param {string} className
+         * @returns {BootstrapDecorator}
+         */
+        setIconValidClassName: function(className) {
+            iconValidClassName = className;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Sets icon invalid class name.
+         *
+         * @param className
+         * @returns {BootstrapDecorator}
+         */
+        setIconInvalidClassName: function(className) {
+            iconInvalidClassName = className;
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        //-------------//
+        // API SECTION //
+        //-------------//
+
+        /**
+         * Returns icon class name according to specified state.
+         *
+         * @param {boolean} valid
+         * @returns {string}
+         */
+        getIconClassName: function(valid) {
+            if (valid) {
+                if ('undefined' !== typeof iconValidClassName) {
+                    return iconValidClassName;
+                } else {
+                    return iconClasses[iconLibrary]['valid'];
+                }
+            } else {
+                if ('undefined' !== typeof iconInvalidClassName) {
+                    return iconInvalidClassName;
+                } else {
+                    return iconClasses[iconLibrary]['invalid'];
+                }
+            }
+        },
+
+        /**
+         * Gets existing icon element from the specified container.
+         *
+         * @param {jQuery} $container
+         * @returns {jQuery|null}
+         */
+        getExistingIconElement: function($container) {
+            var $iconElement = $container.find(iconElementType + '.' + iconClassName);
+            return ($iconElement.length > 0 ? $iconElement : null);
+        },
+
+        /**
+         * Creates new icon element inside of a specified container
+         * and returns it.
+         *
+         * @param {jQuery} $container
+         * @returns {jQuery}
+         */
+        createIconElement: function($container) {
+            var $iconElement = $('<' + iconElementType + '>')
+                    .addClass(iconClassName)
+                ;
+            $container.append($iconElement);
+            return $iconElement;
+        },
+
+        /**
+         * Shows specified icon element.
+         *
+         * @param {jQuery} $iconElement
+         * @returns {BootstrapDecorator}
+         */
+        showIconElement: function($iconElement) {
+            showElement($iconElement);
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Hides specified icon element.
+         *
+         * @param {jQuery} $iconElement
+         * @returns {BootstrapDecorator}
+         */
+        hideIconElement: function($iconElement) {
+            hideElement($iconElement);
+            // noinspection JSValidateTypes
+            return this;
+        },
+
+        /**
+         * Decorates specified element according to specified state.
+         *
+         * @param {jQuery} $inputElement
+         * @param {boolean} valid
+         */
+        decorateElement: function($inputElement, valid) {
+            // Calling parent function.
+            classNameDecorator.decorateElement.apply(this, arguments);
+
+            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+
+            // Decorating icons.
+            if (useIcons) {
+
+                // Making sure class is present for container.
+                $decoratedElement.addClass(elementClassName);
+
+                // Looking for existing icon element.
+                var $iconElement = this.getExistingIconElement($decoratedElement);
+                if (!$iconElement) {
+                    // Creating new icon element if it's missing.
+                    $iconElement = this.createIconElement($decoratedElement);
+                }
+
+                // Making sure proper class is set for icon element.
+                $iconElement
+                    .removeClass(this.getIconClassName(!valid))
+                    .addClass(this.getIconClassName(valid))
+                ;
+
+                // Making sure icon element is shown.
+                this.showIconElement($iconElement);
+            }
+        },
+
+        /**
+         * Removes all decorations from the specified element.
+         *
+         * @param {jQuery} $inputElement
+         */
+        clearDecorations: function($inputElement) {
+            classNameDecorator.clearDecorations.apply(this, arguments);
+            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+            if (useIcons) {
+                var $iconElement = this.getExistingIconElement($decoratedElement);
+                if ($iconElement) {
+                    this.hideIconElement($iconElement);
+                }
+            }
+        }
+    };
+
+    // Creating a final instance by extending class name decorator with bootstrap one.
+    return angular.extend({}, classNameDecorator, bootstrapDecorator);
+}
+
     /**
  * Provider for validation errors service.
  */
 function errorsProvider() {
+
     var self = this;
 
     var traverser;
@@ -207,7 +507,7 @@ function errorsProvider() {
      *
      * @param {function} _traverser
      */
-    self.setTraverser = function (_traverser) {
+    self.useTraverser = function (_traverser) {
         // noinspection JSValidateTypes
         traverser = _traverser;
 
@@ -351,134 +651,6 @@ function defaultErrorsTraverser($element) {
 }
 
 /**
- * @constructor
- */
-function ClassNameDecorator() {
-
-    var invalidClassName = 'invalid';
-    var validClassName   = 'valid';
-
-    return {
-        setValidClassName: function(className) {
-            validClassName = className;
-            return this;
-        },
-
-        setInvalidClassName: function(className) {
-            invalidClassName = className;
-            return this;
-        },
-
-        decorateElement: function(element, valid) {
-            if (valid) {
-                element
-                    .removeClass(invalidClassName)
-                    .addClass(validClassName)
-                ;
-            } else {
-                element
-                    .removeClass(validClassName)
-                    .addClass(invalidClassName)
-                ;
-            }
-        },
-
-        clearDecorations: function(element) {
-            element
-                .removeClass(invalidClassName)
-                .removeClass(validClassName)
-            ;
-        }
-    };
-}
-/**
- * @constructor
- * @extends ClassNameDecorator
- */
-function BootstrapDecorator() {
-
-    // Extending ClassNameDecorator.
-    var decorator = new ClassNameDecorator();
-
-    var elementClassName = 'has-feedback';
-    var iconElementName = 'span';
-    var iconClassName = 'form-control-feedback';
-
-    //var iconValidClassName = 'glyphicon glyphicon-ok';
-    //var iconInvalidClassName = 'glyphicon glyphicon-remove';
-
-    var iconValidClassName = 'fa fa-check';
-    var iconInvalidClassName = 'fa fa-exclamation-circle';
-
-    var useIcons = true;
-
-    // Saving parent function for future calls.
-    var classNameDecorate = decorator.decorateElement;
-    var classNameClearDecorations = decorator.clearDecorations;
-
-    var getExistingIconElement = function($container) {
-        var $iconElement = $container.find(iconElementName + '.' + iconClassName);
-        return ($iconElement.length > 0 ? $iconElement : null);
-    };
-
-    var createIconElement = function($container) {
-        var $iconElement = $('<' + iconElementName + '>')
-            .addClass(iconClassName)
-        ;
-        $container.append($iconElement);
-        return $iconElement;
-    };
-
-    decorator.decorateElement = function($decoratedElement, valid) {
-        // Calling parent function.
-        classNameDecorate.apply(this, arguments);
-
-        // Decorating icons.
-        if (useIcons) {
-
-            // Making sure class is present for container.
-            $decoratedElement.addClass(elementClassName);
-
-            // Looking for existing icon element.
-            var $iconElement = getExistingIconElement($decoratedElement);
-            if (!$iconElement) {
-                // Creating new icon element if it's missing.
-                $iconElement = createIconElement($decoratedElement);
-            }
-
-            // Making sure proper class is set for icon element.
-            if (valid) {
-                $iconElement
-                    .removeClass(iconInvalidClassName)
-                    .addClass(iconValidClassName)
-                ;
-            } else {
-                $iconElement
-                    .removeClass(iconValidClassName)
-                    .addClass(iconInvalidClassName)
-                ;
-            }
-        }
-    };
-
-    decorator.clearDecorations = function($decoratedElement) {
-        classNameClearDecorations.apply(this, arguments);
-        if (useIcons) {
-            var $iconElement = getExistingIconElement($decoratedElement);
-            if ($iconElement) {
-                $iconElement.remove();
-            }
-        }
-    };
-
-    // Setting classnames used in Bootstrap.
-    decorator.setValidClassName('has-success');
-    decorator.setInvalidClassName('has-error');
-
-    // Returning modified instance.
-    return decorator;
-}
-/**
  * Default implementation of error list renderer.
  *
  * @constructor
@@ -491,15 +663,23 @@ function DefaultErrorListRenderer() {
         listItemElementType: 'li',
 
         /**
-         * Used to extract constraint name from class name.
+         * Cached RegExp object to extracts constraint name from class name.
          */
         listItemConstraintRegExp: null,
 
+        /**
+         * Extracts constraint name from class name.
+         *
+         * @param {string} className
+         * @returns {string}
+         */
         extractConstraintNameFromClassName: function(className) {
             if (!this.listItemConstraintRegExp) {
+                // Creating RegExp object if it's not yet created.
                 this.listItemConstraintRegExp = new RegExp(this.listItemClassNamePrefix + '(\\S+)');
             }
 
+            // Matching RegExp.
             var result = this.listItemConstraintRegExp.exec(className);
 
             return (result[1] ? result[1] : null);
@@ -727,36 +907,36 @@ function LanguageStringDictionary()
     var defaultLanguage = (window.navigator.userLanguage || window.navigator.language || fallbackLanguage);
 
     /**
-     * Registry contains the list of dictionaries for different languages.
-     *
-     * @type {object}
-     */
-    var registry = {
-        'en': {
-            generic   : 'Please enter a correct value',
-            required  : 'Please fill in this required field',
-            email     : 'Please specify valid E-Mail address',
-            minlength : 'Please enter a value not less than {0} characters',
-            maxlength : 'Please enter a value not greater than {0} characters',
-            number    : 'Please enter a correct number',
-            min       : 'Please enter a number not less than {0}',
-            max       : 'Please enter a number not greater than {0}',
-            pattern   : 'Please enter a correct value according to specified rules',
-            url       : 'Please enter a valid URL address'
-        },
-        'ru': {
-            generic   : 'Пожалуйста введите корректное значение',
-            required  : 'Пожалуйста заполните это обязательное поле',
-            email     : 'Пожалуйста укажите корректный E-Mail адрес',
-            minlength : 'Пожалуйста укажите значение не короче {0} символов',
-            maxlength : 'Пожалуйста укажите значение не длиннее {0} символов',
-            number    : 'Пожалуйста введите корректное число',
-            min       : 'Пожалуйста укажите число не меньше чем {0}',
-            max       : 'Пожалуйста укажите число не больше чем {0}',
-            pattern   : 'Пожалуйста введите значение в соответствии с указанными требованиями',
-            url       : 'Пожалуйста укажите корректный URL адрес'
-        }
-    };
+ * Registry contains the list of dictionaries for different languages.
+ *
+ * @type {object}
+ */
+var registry = {
+    'en': {
+        generic   : 'Please enter a correct value',
+        required  : 'Please fill in this required field',
+        email     : 'Please specify valid E-Mail address',
+        minlength : 'Please enter a value not less than {0} characters',
+        maxlength : 'Please enter a value not greater than {0} characters',
+        number    : 'Please enter a correct number',
+        min       : 'Please enter a number not less than {0}',
+        max       : 'Please enter a number not greater than {0}',
+        pattern   : 'Please enter a correct value according to specified rules',
+        url       : 'Please enter a valid URL address'
+    },
+    'ru': {
+        generic   : 'Пожалуйста введите корректное значение',
+        required  : 'Пожалуйста заполните это обязательное поле',
+        email     : 'Пожалуйста укажите корректный E-Mail адрес',
+        minlength : 'Пожалуйста укажите значение не короче {0} символов',
+        maxlength : 'Пожалуйста укажите значение не длиннее {0} символов',
+        number    : 'Пожалуйста введите корректное число',
+        min       : 'Пожалуйста укажите число не меньше чем {0}',
+        max       : 'Пожалуйста укажите число не больше чем {0}',
+        pattern   : 'Пожалуйста введите значение в соответствии с указанными требованиями',
+        url       : 'Пожалуйста укажите корректный URL адрес'
+    }
+};
 
     /**
      * Derives all possible language codes from the specified one.
