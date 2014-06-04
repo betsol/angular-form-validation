@@ -70,24 +70,30 @@ function decorationsProvider() {
                     if (null === decorator) {
                         decorator = new builtInDecorators.default();
                     }
-                    // If input is invalid.
-                    if (ngModel.$invalid) {
-                        // Decorating element as invalid.
-                        decorator.decorateElement($element, false);
-                    // If input is valid and value has changed.
-                    } else if (ngModel.modified) {
-                        // Decorating element as valid.
-                        decorator.decorateElement($element, true);
+                    if (ngModel.$dirty || ngModel.validationForced) {
+                        // If input is invalid.
+                        if (ngModel.$invalid) {
+                            // Decorating element as invalid.
+                            decorator.decorateElement($element, false);
+                            // If input is valid and value has changed.
+                        } else if (ngModel.modified) {
+                            // Decorating element as valid.
+                            decorator.decorateElement($element, true);
+                        } else {
+                            // Removing all decorations if it's valid and not modified.
+                            decorator.clearDecorations($element);
+                        }
                     } else {
-                        // Removing all decorations if it's valid and not modified.
+                        // Removing all decorations if it's pristine.
                         decorator.clearDecorations($element);
                     }
                 };
 
                 // Re-decorating the element when it's state changes.
-                $scope.$watch(scopePath + '.$valid',    redecorateElement);
-                $scope.$watch(scopePath + '.$pristine', redecorateElement);
-                $scope.$watch(scopePath + '.modified',  redecorateElement);
+                $scope.$watch(scopePath + '.$valid',           redecorateElement);
+                $scope.$watch(scopePath + '.$pristine',        redecorateElement);
+                $scope.$watch(scopePath + '.modified',         redecorateElement);
+                $scope.$watch(scopePath + '.validationForced', redecorateElement);
             }
         };
     };

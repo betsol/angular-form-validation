@@ -15,6 +15,93 @@ function DefaultErrorListRenderer() {
          */
         listItemConstraintRegExp: null,
 
+
+        /**
+         * Renders error list of specified constraints inside of a specified container.
+         *
+         * @param {jQuery} $container
+         * @param {object} errorList
+         */
+        render: function($container, errorList) {
+
+            var hasErrors = !isObjectEmpty(errorList);
+
+            // Getting existing list element from the container.
+            var $listElement = this.getListElement($container);
+
+            if (hasErrors) {
+                if (!$listElement) {
+                    $listElement = this.createListElement($container);
+                }
+
+                // Rendering error items.
+                this.renderErrorItems($listElement, errorList);
+
+                // Showing list element.
+                this.showListElement($listElement);
+
+            } else {
+                if ($listElement) {
+                    this.hideListElement($listElement);
+                }
+            }
+        },
+
+        /**
+         * Removes error list from the specified container.
+         *
+         * @param $container
+         */
+        clear: function($container) {
+
+            // Getting existing list element from the container.
+            var $listElement = this.getListElement($container);
+
+            if ($listElement) {
+                // Hiding list element if it's present.
+                this.hideListElement($listElement);
+            }
+        },
+
+        /**
+         * Renders list items of specified constraints inside of a specified list element.
+         *
+         * @param {jQuery} $listElement
+         * @param {object} errorList
+         */
+        renderErrorItems: function($listElement, errorList) {
+            var self = this;
+
+            // Iterating over list items and removing no longer needed ones.
+            angular.forEach(this.getExistingListItems($listElement), function(listItem) {
+                var $listItem = $(listItem);
+
+                var className = $listItem.attr('class');
+
+                var constraint = self.extractConstraintNameFromClassName(className);
+
+                if (constraint) {
+                    // If this constraint is not in the list of active errors.
+                    if (!errorList[constraint]) {
+                        // Hiding this list item.
+                        self.hideListItem($listItem);
+                    }
+                } else {
+                    // Removing list item if we can't match it.
+                    self.removeListItem($listItem);
+                }
+            });
+
+            // Iterating over errors and showing list items.
+            angular.forEach(errorList, function(message, constraint) {
+                var $listItem = self.getExistingListItem($listElement, constraint);
+                if (!$listItem) {
+                    $listItem = self.createListItem($listElement, constraint, message);
+                }
+                self.showListItem($listItem);
+            });
+        },
+
         /**
          * Extracts constraint name from class name.
          *
@@ -173,76 +260,6 @@ function DefaultErrorListRenderer() {
         getListItemClassName: function(constraint) {
             // noinspection JSPotentiallyInvalidUsageOfThis
             return (this.listItemClassNamePrefix + constraint);
-        },
-
-        /**
-         * Renders error list of specified constraints inside of a specified container.
-         *
-         * @param {jQuery} $container
-         * @param {object} errorList
-         */
-        render: function($container, errorList) {
-
-            var hasErrors = !isObjectEmpty(errorList);
-
-            // Getting existing list element from the container.
-            var $listElement = this.getListElement($container);
-
-            if (hasErrors) {
-                if (!$listElement) {
-                    $listElement = this.createListElement($container);
-                }
-
-                // Rendering error items.
-                this.renderErrorItems($listElement, errorList);
-
-                // Showing list element.
-                this.showListElement($listElement);
-
-            } else {
-                if ($listElement) {
-                    this.hideListElement($listElement);
-                }
-            }
-        },
-
-        /**
-         * Renders list items of specified constraints inside of a specified list element.
-         *
-         * @param {jQuery} $listElement
-         * @param {object} errorList
-         */
-        renderErrorItems: function($listElement, errorList) {
-            var self = this;
-
-            // Iterating over list items and removing no longer needed ones.
-            angular.forEach(this.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
-
-                var className = $listItem.attr('class');
-
-                var constraint = self.extractConstraintNameFromClassName(className);
-
-                if (constraint) {
-                    // If this constraint is not in the list of active errors.
-                    if (!errorList[constraint]) {
-                        // Hiding this list item.
-                        self.hideListItem($listItem);
-                    }
-                } else {
-                    // Removing list item if we can't match it.
-                    self.removeListItem($listItem);
-                }
-            });
-
-            // Iterating over errors and showing list items.
-            angular.forEach(errorList, function(message, constraint) {
-                var $listItem = self.getExistingListItem($listElement, constraint);
-                if (!$listItem) {
-                    $listItem = self.createListItem($listElement, constraint, message);
-                }
-                self.showListItem($listItem);
-            });
         }
     };
 }

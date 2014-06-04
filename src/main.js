@@ -53,6 +53,9 @@
 
         this.register = function(scope, element, attrs, ngModel, ngForm) {
 
+            // Adding common functions.
+            commonFunctions(ngForm, ngModel);
+
             // Scope path is used to uniquely distinguish between different inputs
             // and to specify the $watch-es.
             var scopePath = ngForm.$name + '["' + ngModel.$name + '"]';
@@ -71,6 +74,35 @@
                 attached.push(scopePath);
             }
         };
+    }
+
+    /**
+     * Adds common functions to form and model controllers.
+     *
+     * @param {object} ngForm
+     * @param {object} ngModel
+     */
+    function commonFunctions(ngForm, ngModel)
+    {
+        // Form force validation.
+        if ('undefined' === typeof ngForm.forceValidation) {
+            ngForm.forceValidation = function(validationForced) {
+                // Calling force validation for every child form element.
+                angular.forEach(ngForm, function(item) {
+                    if ('function' === typeof item.forceValidation) {
+                        item.forceValidation(validationForced);
+                    }
+                });
+            };
+        }
+
+        // Input force validation.
+        if ('undefined' === typeof ngModel.forceValidation) {
+            ngModel.validationForced = false;
+            ngModel.forceValidation = function(validationForced) {
+                this.validationForced = validationForced;
+            };
+        }
     }
 
     // @@include('decorations/provider.js')

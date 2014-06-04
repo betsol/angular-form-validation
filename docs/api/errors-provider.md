@@ -106,6 +106,26 @@ An instance of [DefaultErrorListRenderer][default-error-list-renderer].
 
 ---
 
+### {object}: buildErrorListFromConstraints({object} constraints, {object} constraintParameters)
+
+Builds list of errors from constraints and constraint parameters.
+
+#### Input
+
+**{object} constraints**
+
+Constraints for this input element.
+
+**{object} constraintParameters**
+
+Constraint parameters for this input element.
+
+#### Output
+
+List of errors.
+
+---
+
 [decorator-className]: decorators/classname.md
 [decorator-bootstrap]: decorators/bootstrap.md
 [jquery-traversing]: http://api.jquery.com/category/traversing/

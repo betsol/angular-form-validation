@@ -1,6 +1,6 @@
 {
   "name": "angular-form-validation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AngularJS module to automate form validations",
   "main": "dist/angular-form-validation.js",
   "repository": {

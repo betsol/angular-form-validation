@@ -71,6 +71,27 @@ function errorsProvider() {
         return new DefaultErrorListRenderer();
     };
 
+    /**
+     * Builds list of errors from constraints and constraint parameters.
+     *
+     * @param {object} constraints
+     * @param {object} constraintParameters
+     * @returns {object}
+     */
+    self.buildErrorListFromConstraints = function(constraints, constraintParameters) {
+        var errorList = {};
+        angular.forEach(constraints, function(invalid, name) {
+            if (invalid) {
+                var parameters;
+                if (constraintParameters[name]) {
+                    parameters = [constraintParameters[name]];
+                }
+                errorList[name] = dictionary.getString(name, parameters, language);
+            }
+        });
+        return errorList;
+    };
+
     self.$get = function () {
 
         if (!traverser) {
@@ -96,23 +117,29 @@ function errorsProvider() {
                 // Calling traverser to find proper DOM element for placing error list.
                 var $listContainer = traverser($element);
 
+                var updateState = function() {
+                    if (ngModel.$dirty || ngModel.validationForced) {
+
+                        // Building the list of errors.
+                        var errorList = self.buildErrorListFromConstraints(ngModel.$error, constraintParameters);
+
+                        // Calling error list renderer to actually display the list.
+                        errorListRenderer.render($listContainer, errorList);
+
+                    } else {
+                        // Calling error list renderer to hide the list.
+                        errorListRenderer.clear($listContainer);
+                    }
+                };
+
                 // Watching for input value validity change.
-                $scope.$watch(scopePath + '.$error', function (constraints) {
+                $scope.$watch(scopePath + '.$error', updateState, true);
 
-                    var errorList = {};
-                    angular.forEach(constraints, function(invalid, name) {
-                        if (invalid) {
-                            var parameters;
-                            if (constraintParameters[name]) {
-                                parameters = [constraintParameters[name]];
-                            }
-                            errorList[name] = dictionary.getString(name, parameters, language);
-                        }
-                    });
+                // Watching for pristine/dirty state change.
+                $scope.$watch(scopePath + '.$pristine', updateState);
 
-                    // Calling error list renderer to actually display the list.
-                    errorListRenderer.render($listContainer, errorList);
-                }, true);
+                // Watching for validation force.
+                $scope.$watch(scopePath + '.validationForced', updateState);
             }
         };
     };

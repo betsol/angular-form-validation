@@ -53,6 +53,9 @@
 
         this.register = function(scope, element, attrs, ngModel, ngForm) {
 
+            // Adding common functions.
+            commonFunctions(ngForm, ngModel);
+
             // Scope path is used to uniquely distinguish between different inputs
             // and to specify the $watch-es.
             var scopePath = ngForm.$name + '["' + ngModel.$name + '"]';
@@ -71,6 +74,35 @@
                 attached.push(scopePath);
             }
         };
+    }
+
+    /**
+     * Adds common functions to form and model controllers.
+     *
+     * @param {object} ngForm
+     * @param {object} ngModel
+     */
+    function commonFunctions(ngForm, ngModel)
+    {
+        // Form force validation.
+        if ('undefined' === typeof ngForm.forceValidation) {
+            ngForm.forceValidation = function(validationForced) {
+                // Calling force validation for every child form element.
+                angular.forEach(ngForm, function(item) {
+                    if ('function' === typeof item.forceValidation) {
+                        item.forceValidation(validationForced);
+                    }
+                });
+            };
+        }
+
+        // Input force validation.
+        if ('undefined' === typeof ngModel.forceValidation) {
+            ngModel.validationForced = false;
+            ngModel.forceValidation = function(validationForced) {
+                this.validationForced = validationForced;
+            };
+        }
     }
 
     /**
@@ -145,24 +177,30 @@ function decorationsProvider() {
                     if (null === decorator) {
                         decorator = new builtInDecorators.default();
                     }
-                    // If input is invalid.
-                    if (ngModel.$invalid) {
-                        // Decorating element as invalid.
-                        decorator.decorateElement($element, false);
-                    // If input is valid and value has changed.
-                    } else if (ngModel.modified) {
-                        // Decorating element as valid.
-                        decorator.decorateElement($element, true);
+                    if (ngModel.$dirty || ngModel.validationForced) {
+                        // If input is invalid.
+                        if (ngModel.$invalid) {
+                            // Decorating element as invalid.
+                            decorator.decorateElement($element, false);
+                            // If input is valid and value has changed.
+                        } else if (ngModel.modified) {
+                            // Decorating element as valid.
+                            decorator.decorateElement($element, true);
+                        } else {
+                            // Removing all decorations if it's valid and not modified.
+                            decorator.clearDecorations($element);
+                        }
                     } else {
-                        // Removing all decorations if it's valid and not modified.
+                        // Removing all decorations if it's pristine.
                         decorator.clearDecorations($element);
                     }
                 };
 
                 // Re-decorating the element when it's state changes.
-                $scope.$watch(scopePath + '.$valid',    redecorateElement);
-                $scope.$watch(scopePath + '.$pristine', redecorateElement);
-                $scope.$watch(scopePath + '.modified',  redecorateElement);
+                $scope.$watch(scopePath + '.$valid',           redecorateElement);
+                $scope.$watch(scopePath + '.$pristine',        redecorateElement);
+                $scope.$watch(scopePath + '.modified',         redecorateElement);
+                $scope.$watch(scopePath + '.validationForced', redecorateElement);
             }
         };
     };
@@ -563,6 +601,27 @@ function errorsProvider() {
         return new DefaultErrorListRenderer();
     };
 
+    /**
+     * Builds list of errors from constraints and constraint parameters.
+     *
+     * @param {object} constraints
+     * @param {object} constraintParameters
+     * @returns {object}
+     */
+    self.buildErrorListFromConstraints = function(constraints, constraintParameters) {
+        var errorList = {};
+        angular.forEach(constraints, function(invalid, name) {
+            if (invalid) {
+                var parameters;
+                if (constraintParameters[name]) {
+                    parameters = [constraintParameters[name]];
+                }
+                errorList[name] = dictionary.getString(name, parameters, language);
+            }
+        });
+        return errorList;
+    };
+
     self.$get = function () {
 
         if (!traverser) {
@@ -588,23 +647,29 @@ function errorsProvider() {
                 // Calling traverser to find proper DOM element for placing error list.
                 var $listContainer = traverser($element);
 
+                var updateState = function() {
+                    if (ngModel.$dirty || ngModel.validationForced) {
+
+                        // Building the list of errors.
+                        var errorList = self.buildErrorListFromConstraints(ngModel.$error, constraintParameters);
+
+                        // Calling error list renderer to actually display the list.
+                        errorListRenderer.render($listContainer, errorList);
+
+                    } else {
+                        // Calling error list renderer to hide the list.
+                        errorListRenderer.clear($listContainer);
+                    }
+                };
+
                 // Watching for input value validity change.
-                $scope.$watch(scopePath + '.$error', function (constraints) {
+                $scope.$watch(scopePath + '.$error', updateState, true);
 
-                    var errorList = {};
-                    angular.forEach(constraints, function(invalid, name) {
-                        if (invalid) {
-                            var parameters;
-                            if (constraintParameters[name]) {
-                                parameters = [constraintParameters[name]];
-                            }
-                            errorList[name] = dictionary.getString(name, parameters, language);
-                        }
-                    });
+                // Watching for pristine/dirty state change.
+                $scope.$watch(scopePath + '.$pristine', updateState);
 
-                    // Calling error list renderer to actually display the list.
-                    errorListRenderer.render($listContainer, errorList);
-                }, true);
+                // Watching for validation force.
+                $scope.$watch(scopePath + '.validationForced', updateState);
             }
         };
     };
@@ -666,6 +731,93 @@ function DefaultErrorListRenderer() {
          * Cached RegExp object to extracts constraint name from class name.
          */
         listItemConstraintRegExp: null,
+
+
+        /**
+         * Renders error list of specified constraints inside of a specified container.
+         *
+         * @param {jQuery} $container
+         * @param {object} errorList
+         */
+        render: function($container, errorList) {
+
+            var hasErrors = !isObjectEmpty(errorList);
+
+            // Getting existing list element from the container.
+            var $listElement = this.getListElement($container);
+
+            if (hasErrors) {
+                if (!$listElement) {
+                    $listElement = this.createListElement($container);
+                }
+
+                // Rendering error items.
+                this.renderErrorItems($listElement, errorList);
+
+                // Showing list element.
+                this.showListElement($listElement);
+
+            } else {
+                if ($listElement) {
+                    this.hideListElement($listElement);
+                }
+            }
+        },
+
+        /**
+         * Removes error list from the specified container.
+         *
+         * @param $container
+         */
+        clear: function($container) {
+
+            // Getting existing list element from the container.
+            var $listElement = this.getListElement($container);
+
+            if ($listElement) {
+                // Hiding list element if it's present.
+                this.hideListElement($listElement);
+            }
+        },
+
+        /**
+         * Renders list items of specified constraints inside of a specified list element.
+         *
+         * @param {jQuery} $listElement
+         * @param {object} errorList
+         */
+        renderErrorItems: function($listElement, errorList) {
+            var self = this;
+
+            // Iterating over list items and removing no longer needed ones.
+            angular.forEach(this.getExistingListItems($listElement), function(listItem) {
+                var $listItem = $(listItem);
+
+                var className = $listItem.attr('class');
+
+                var constraint = self.extractConstraintNameFromClassName(className);
+
+                if (constraint) {
+                    // If this constraint is not in the list of active errors.
+                    if (!errorList[constraint]) {
+                        // Hiding this list item.
+                        self.hideListItem($listItem);
+                    }
+                } else {
+                    // Removing list item if we can't match it.
+                    self.removeListItem($listItem);
+                }
+            });
+
+            // Iterating over errors and showing list items.
+            angular.forEach(errorList, function(message, constraint) {
+                var $listItem = self.getExistingListItem($listElement, constraint);
+                if (!$listItem) {
+                    $listItem = self.createListItem($listElement, constraint, message);
+                }
+                self.showListItem($listItem);
+            });
+        },
 
         /**
          * Extracts constraint name from class name.
@@ -825,76 +977,6 @@ function DefaultErrorListRenderer() {
         getListItemClassName: function(constraint) {
             // noinspection JSPotentiallyInvalidUsageOfThis
             return (this.listItemClassNamePrefix + constraint);
-        },
-
-        /**
-         * Renders error list of specified constraints inside of a specified container.
-         *
-         * @param {jQuery} $container
-         * @param {object} errorList
-         */
-        render: function($container, errorList) {
-
-            var hasErrors = !isObjectEmpty(errorList);
-
-            // Getting existing list element from the container.
-            var $listElement = this.getListElement($container);
-
-            if (hasErrors) {
-                if (!$listElement) {
-                    $listElement = this.createListElement($container);
-                }
-
-                // Rendering error items.
-                this.renderErrorItems($listElement, errorList);
-
-                // Showing list element.
-                this.showListElement($listElement);
-
-            } else {
-                if ($listElement) {
-                    this.hideListElement($listElement);
-                }
-            }
-        },
-
-        /**
-         * Renders list items of specified constraints inside of a specified list element.
-         *
-         * @param {jQuery} $listElement
-         * @param {object} errorList
-         */
-        renderErrorItems: function($listElement, errorList) {
-            var self = this;
-
-            // Iterating over list items and removing no longer needed ones.
-            angular.forEach(this.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
-
-                var className = $listItem.attr('class');
-
-                var constraint = self.extractConstraintNameFromClassName(className);
-
-                if (constraint) {
-                    // If this constraint is not in the list of active errors.
-                    if (!errorList[constraint]) {
-                        // Hiding this list item.
-                        self.hideListItem($listItem);
-                    }
-                } else {
-                    // Removing list item if we can't match it.
-                    self.removeListItem($listItem);
-                }
-            });
-
-            // Iterating over errors and showing list items.
-            angular.forEach(errorList, function(message, constraint) {
-                var $listItem = self.getExistingListItem($listElement, constraint);
-                if (!$listItem) {
-                    $listItem = self.createListItem($listElement, constraint, message);
-                }
-                self.showListItem($listItem);
-            });
         }
     };
 }

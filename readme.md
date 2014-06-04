@@ -1,4 +1,4 @@
-# angular-form-validation 1.0.0
+# angular-form-validation 1.0.1
 
 ## Description
 
@@ -79,6 +79,16 @@ can do this very easily with just the following steps:
 ## API
 
 See the detailed [API documentation][docs-api].
+
+## Forced validation
+
+Since version `1.0.1` of this module, input elements **are not** decorated in any way if they are pristine.
+To counter this behavior functionality called "forced validation" was introduced.
+
+- Call `ngModel.forceValidation(true/false)` to enable/disable forced validation for this input element
+- Call `ngForm.forceValidation(true/false)` to set forced validation on all form elements
+
+When forced validation is enabled for an input element it **will be** decorated even if it's pristine.
 
 ## Feedback
 
