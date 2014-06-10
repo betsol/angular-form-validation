@@ -12,6 +12,10 @@
             'formValidationDecorations', 'formValidationErrors',
             registrationService
         ])
+        .service('formValidationHelper', [
+            'formValidationDecorations', 'formValidationErrors',
+            helperService
+        ])
         .directive('input',    formValidationDirectiveSpecification)
         .directive('textarea', formValidationDirectiveSpecification)
         .directive('select',   formValidationDirectiveSpecification)
@@ -105,6 +109,16 @@
         }
     }
 
+    function helperService(formValidationDecorations, formValidationErrors)
+    {
+        return {
+            showErrors: function(formName, ngModel, errorMessages, temp) {
+                formValidationDecorations.decorateElement(formName, ngModel, false, temp);
+                formValidationErrors.renderErrorList(formName, ngModel.$name, errorMessages, temp);
+            }
+        };
+    }
+
     /**
  * Provider for decorations service.
  */
@@ -166,41 +180,78 @@ function decorationsProvider() {
      * Returns the service instance.
      */
     self.$get = function() {
+
+        // Using default decorator if it's not set.
+        if (null === decorator) {
+            decorator = new builtInDecorators.default();
+        }
+
         return {
             attach: function($scope, $element, attrs, ngModel, ngForm, scopePath) {
 
-                /**
-                 * This function will determine input's state and re-decorate it accordingly.
-                 */
-                var redecorateElement = function() {
-                    // Using default decorator if it's not set.
-                    if (null === decorator) {
-                        decorator = new builtInDecorators.default();
-                    }
-                    if (ngModel.$dirty || ngModel.validationForced) {
-                        // If input is invalid.
-                        if (ngModel.$invalid) {
-                            // Decorating element as invalid.
-                            decorator.decorateElement($element, false);
-                            // If input is valid and value has changed.
-                        } else if (ngModel.modified) {
-                            // Decorating element as valid.
-                            decorator.decorateElement($element, true);
-                        } else {
-                            // Removing all decorations if it's valid and not modified.
-                            decorator.clearDecorations($element);
-                        }
-                    } else {
-                        // Removing all decorations if it's pristine.
-                        decorator.clearDecorations($element);
-                    }
+                var self = this;
+                var handler = function() {
+                    self.redecorateElement(ngModel, $element);
                 };
 
                 // Re-decorating the element when it's state changes.
-                $scope.$watch(scopePath + '.$valid',           redecorateElement);
-                $scope.$watch(scopePath + '.$pristine',        redecorateElement);
-                $scope.$watch(scopePath + '.modified',         redecorateElement);
-                $scope.$watch(scopePath + '.validationForced', redecorateElement);
+                $scope.$watch(scopePath + '.$valid',           handler);
+                $scope.$watch(scopePath + '.$pristine',        handler);
+                $scope.$watch(scopePath + '.modified',         handler);
+                $scope.$watch(scopePath + '.validationForced', handler);
+            },
+
+            /**
+             * This function will determine input's state and re-decorate it accordingly.
+             *
+             * @param {object} ngModel
+             * @param {jQuery} $element
+             */
+            redecorateElement: function(ngModel, $element) {
+                if (ngModel.$dirty || ngModel.validationForced) {
+                    // If input is invalid.
+                    if (ngModel.$invalid) {
+                        // Decorating element as invalid.
+                        decorator.decorateElement($element, false);
+                        // If input is valid and value has changed.
+                    } else if (ngModel.modified) {
+                        // Decorating element as valid.
+                        decorator.decorateElement($element, true);
+                    } else {
+                        // Removing all decorations if it's valid and not modified.
+                        decorator.clearDecorations($element);
+                    }
+                } else {
+                    // Removing all decorations if it's pristine.
+                    decorator.clearDecorations($element);
+                }
+            },
+
+            /**
+             * Decorates element as valid or invalid according to the specified value.
+             * Element is specified by form and element names.
+             *
+             * @param {string} formName
+             * @param {object} ngModel
+             * @param {boolean} valid
+             * @param {boolean} temp
+             */
+            decorateElement: function(formName, ngModel, valid, temp) {
+
+                var self = this;
+
+                var $element = getInputByName(formName, ngModel.$name);
+
+                // When temporary decorations are rendered
+                // we need to watch for a single change of the input value
+                // in order to remove them.
+                if (temp) {
+                    $element.one('input', function() {
+                        self.redecorateElement(ngModel, $element);
+                    });
+                }
+
+                decorator.decorateElement($element, valid);
             }
         };
     };
@@ -640,6 +691,7 @@ function errorsProvider() {
         }
 
         return {
+
             attach: function ($scope, $element, attrs, ngModel, ngForm, scopePath) {
 
                 var constraintParameters = collectConstraintParameters(attrs);
@@ -648,7 +700,7 @@ function errorsProvider() {
                 var $listContainer = traverser($element);
 
                 var updateState = function() {
-                    if (ngModel.$dirty || ngModel.validationForced) {
+                    if ((ngModel.$dirty || ngModel.validationForced) && ngModel.$invalid) {
 
                         // Building the list of errors.
                         var errorList = self.buildErrorListFromConstraints(ngModel.$error, constraintParameters);
@@ -657,6 +709,7 @@ function errorsProvider() {
                         errorListRenderer.render($listContainer, errorList);
 
                     } else {
+
                         // Calling error list renderer to hide the list.
                         errorListRenderer.clear($listContainer);
                     }
@@ -670,6 +723,39 @@ function errorsProvider() {
 
                 // Watching for validation force.
                 $scope.$watch(scopePath + '.validationForced', updateState);
+            },
+
+            /**
+             * @param {string} formName
+             * @param {string} inputName
+             * @param {object|array} errorList
+             * @param {boolean} temp
+             */
+            renderErrorList: function(formName, inputName, errorList, temp) {
+
+                var $element = getInputByName(formName, inputName);
+
+                var $listContainer = traverser($element);
+
+                // When temporary errors are rendered
+                // we need to watch for a single change of the input value
+                // in order to remove temporary errors.
+                if (temp) {
+                    $element.one('input', function() {
+                        errorListRenderer.clearTemporary($listContainer);
+                    });
+                }
+
+                errorListRenderer.render($listContainer, errorList, temp);
+            },
+
+            /**
+             * Returns active error list renderer.
+             *
+             * @returns {object}
+             */
+            getErrorListRenderer: function() {
+                return errorListRenderer;
             }
         };
     };
@@ -726,6 +812,7 @@ function DefaultErrorListRenderer() {
         listElementType: 'ul',
         listItemClassNamePrefix: 'constraint-',
         listItemElementType: 'li',
+        listItemTemporaryClassName: 'constraint-temporary',
 
         /**
          * Cached RegExp object to extracts constraint name from class name.
@@ -738,8 +825,13 @@ function DefaultErrorListRenderer() {
          *
          * @param {jQuery} $container
          * @param {object} errorList
+         * @param {boolean} [temp]
          */
-        render: function($container, errorList) {
+        render: function($container, errorList, temp) {
+
+            if ('undefined' === typeof temp) {
+                temp = false;
+            }
 
             var hasErrors = !isObjectEmpty(errorList);
 
@@ -752,7 +844,7 @@ function DefaultErrorListRenderer() {
                 }
 
                 // Rendering error items.
-                this.renderErrorItems($listElement, errorList);
+                this.renderErrorItems($listElement, errorList, temp);
 
                 // Showing list element.
                 this.showListElement($listElement);
@@ -775,9 +867,22 @@ function DefaultErrorListRenderer() {
             var $listElement = this.getListElement($container);
 
             if ($listElement) {
+                // Removing all temporary items from the list.
+                this.removeTemporaryItems($listElement);
+
                 // Hiding list element if it's present.
                 this.hideListElement($listElement);
             }
+        },
+
+        /**
+         * Removes all temporary errors from the specified container.
+         *
+         * @param {jQuery} $container
+         */
+        clearTemporary: function($container) {
+            var $listElement = this.getListElement($container);
+            this.removeTemporaryItems($listElement);
         },
 
         /**
@@ -785,9 +890,13 @@ function DefaultErrorListRenderer() {
          *
          * @param {jQuery} $listElement
          * @param {object} errorList
+         * @param {boolean} temp
          */
-        renderErrorItems: function($listElement, errorList) {
+        renderErrorItems: function($listElement, errorList, temp) {
             var self = this;
+
+            // Removing all temporary items from the list first.
+            this.removeTemporaryItems($listElement);
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(this.getExistingListItems($listElement), function(listItem) {
@@ -813,9 +922,28 @@ function DefaultErrorListRenderer() {
             angular.forEach(errorList, function(message, constraint) {
                 var $listItem = self.getExistingListItem($listElement, constraint);
                 if (!$listItem) {
-                    $listItem = self.createListItem($listElement, constraint, message);
+                    $listItem = self.createListItem($listElement, constraint, message, temp);
                 }
                 self.showListItem($listItem);
+            });
+        },
+
+        /**
+         * Removes all temporary items from the specified list.
+         *
+         * @param {jQuery} $listElement
+         */
+        removeTemporaryItems: function($listElement) {
+
+            var self = this;
+
+            // Iterating over list items and removing no longer needed ones.
+            angular.forEach(self.getExistingListItems($listElement), function(listItem) {
+                var $listItem = $(listItem);
+                if ($listItem.hasClass(self.listItemTemporaryClassName)) {
+                    // Removing list item if it's temporary.
+                    self.removeListItem($listItem);
+                }
             });
         },
 
@@ -921,15 +1049,20 @@ function DefaultErrorListRenderer() {
          * @param {jQuery} $listElement
          * @param {string} constraint
          * @param {string} message
+         * @param {boolean} temp
          *
          * @returns {jQuery}
          */
-        createListItem: function($listElement, constraint, message) {
+        createListItem: function($listElement, constraint, message, temp) {
             // Creating element for list item.
             var $listItem = $('<' + this.listItemElementType + '>')
                 .addClass(this.getListItemClassName(constraint))
                 .html(message)
             ;
+
+            if (temp) {
+                $listItem.addClass(this.listItemTemporaryClassName);
+            }
 
             // Calling decorator to decorate list item
             // before it will be appended to the DOM.
@@ -1182,6 +1315,22 @@ function showElement($element)
         // Showing the element.
         $element.css('display', displayMode);
     }
+}
+
+/**
+ * Returns input element by specified form and input names.
+ *
+ * @param {string} formName
+ * @param {string} inputName
+ * @returns {jQuery}
+ */
+function getInputByName(formName, inputName)
+{
+    return $('form[name="' + formName + '"]').find(
+        'input[name="' + inputName + '"],' +
+        'textarea[name="' + inputName + '"],' +
+        'select[name="' + inputName + '"]'
+    );
 }
 
 })(window, angular);

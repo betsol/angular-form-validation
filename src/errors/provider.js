@@ -110,6 +110,7 @@ function errorsProvider() {
         }
 
         return {
+
             attach: function ($scope, $element, attrs, ngModel, ngForm, scopePath) {
 
                 var constraintParameters = collectConstraintParameters(attrs);
@@ -118,7 +119,7 @@ function errorsProvider() {
                 var $listContainer = traverser($element);
 
                 var updateState = function() {
-                    if (ngModel.$dirty || ngModel.validationForced) {
+                    if ((ngModel.$dirty || ngModel.validationForced) && ngModel.$invalid) {
 
                         // Building the list of errors.
                         var errorList = self.buildErrorListFromConstraints(ngModel.$error, constraintParameters);
@@ -127,6 +128,7 @@ function errorsProvider() {
                         errorListRenderer.render($listContainer, errorList);
 
                     } else {
+
                         // Calling error list renderer to hide the list.
                         errorListRenderer.clear($listContainer);
                     }
@@ -140,6 +142,39 @@ function errorsProvider() {
 
                 // Watching for validation force.
                 $scope.$watch(scopePath + '.validationForced', updateState);
+            },
+
+            /**
+             * @param {string} formName
+             * @param {string} inputName
+             * @param {object|array} errorList
+             * @param {boolean} temp
+             */
+            renderErrorList: function(formName, inputName, errorList, temp) {
+
+                var $element = getInputByName(formName, inputName);
+
+                var $listContainer = traverser($element);
+
+                // When temporary errors are rendered
+                // we need to watch for a single change of the input value
+                // in order to remove temporary errors.
+                if (temp) {
+                    $element.one('input', function() {
+                        errorListRenderer.clearTemporary($listContainer);
+                    });
+                }
+
+                errorListRenderer.render($listContainer, errorList, temp);
+            },
+
+            /**
+             * Returns active error list renderer.
+             *
+             * @returns {object}
+             */
+            getErrorListRenderer: function() {
+                return errorListRenderer;
             }
         };
     };

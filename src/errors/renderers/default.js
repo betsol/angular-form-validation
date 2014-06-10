@@ -9,6 +9,7 @@ function DefaultErrorListRenderer() {
         listElementType: 'ul',
         listItemClassNamePrefix: 'constraint-',
         listItemElementType: 'li',
+        listItemTemporaryClassName: 'constraint-temporary',
 
         /**
          * Cached RegExp object to extracts constraint name from class name.
@@ -21,8 +22,13 @@ function DefaultErrorListRenderer() {
          *
          * @param {jQuery} $container
          * @param {object} errorList
+         * @param {boolean} [temp]
          */
-        render: function($container, errorList) {
+        render: function($container, errorList, temp) {
+
+            if ('undefined' === typeof temp) {
+                temp = false;
+            }
 
             var hasErrors = !isObjectEmpty(errorList);
 
@@ -35,7 +41,7 @@ function DefaultErrorListRenderer() {
                 }
 
                 // Rendering error items.
-                this.renderErrorItems($listElement, errorList);
+                this.renderErrorItems($listElement, errorList, temp);
 
                 // Showing list element.
                 this.showListElement($listElement);
@@ -58,9 +64,22 @@ function DefaultErrorListRenderer() {
             var $listElement = this.getListElement($container);
 
             if ($listElement) {
+                // Removing all temporary items from the list.
+                this.removeTemporaryItems($listElement);
+
                 // Hiding list element if it's present.
                 this.hideListElement($listElement);
             }
+        },
+
+        /**
+         * Removes all temporary errors from the specified container.
+         *
+         * @param {jQuery} $container
+         */
+        clearTemporary: function($container) {
+            var $listElement = this.getListElement($container);
+            this.removeTemporaryItems($listElement);
         },
 
         /**
@@ -68,9 +87,13 @@ function DefaultErrorListRenderer() {
          *
          * @param {jQuery} $listElement
          * @param {object} errorList
+         * @param {boolean} temp
          */
-        renderErrorItems: function($listElement, errorList) {
+        renderErrorItems: function($listElement, errorList, temp) {
             var self = this;
+
+            // Removing all temporary items from the list first.
+            this.removeTemporaryItems($listElement);
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(this.getExistingListItems($listElement), function(listItem) {
@@ -96,9 +119,28 @@ function DefaultErrorListRenderer() {
             angular.forEach(errorList, function(message, constraint) {
                 var $listItem = self.getExistingListItem($listElement, constraint);
                 if (!$listItem) {
-                    $listItem = self.createListItem($listElement, constraint, message);
+                    $listItem = self.createListItem($listElement, constraint, message, temp);
                 }
                 self.showListItem($listItem);
+            });
+        },
+
+        /**
+         * Removes all temporary items from the specified list.
+         *
+         * @param {jQuery} $listElement
+         */
+        removeTemporaryItems: function($listElement) {
+
+            var self = this;
+
+            // Iterating over list items and removing no longer needed ones.
+            angular.forEach(self.getExistingListItems($listElement), function(listItem) {
+                var $listItem = $(listItem);
+                if ($listItem.hasClass(self.listItemTemporaryClassName)) {
+                    // Removing list item if it's temporary.
+                    self.removeListItem($listItem);
+                }
             });
         },
 
@@ -204,15 +246,20 @@ function DefaultErrorListRenderer() {
          * @param {jQuery} $listElement
          * @param {string} constraint
          * @param {string} message
+         * @param {boolean} temp
          *
          * @returns {jQuery}
          */
-        createListItem: function($listElement, constraint, message) {
+        createListItem: function($listElement, constraint, message, temp) {
             // Creating element for list item.
             var $listItem = $('<' + this.listItemElementType + '>')
                 .addClass(this.getListItemClassName(constraint))
                 .html(message)
             ;
+
+            if (temp) {
+                $listItem.addClass(this.listItemTemporaryClassName);
+            }
 
             // Calling decorator to decorate list item
             // before it will be appended to the DOM.

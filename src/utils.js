@@ -65,3 +65,19 @@ function showElement($element)
         $element.css('display', displayMode);
     }
 }
+
+/**
+ * Returns input element by specified form and input names.
+ *
+ * @param {string} formName
+ * @param {string} inputName
+ * @returns {jQuery}
+ */
+function getInputByName(formName, inputName)
+{
+    return $('form[name="' + formName + '"]').find(
+        'input[name="' + inputName + '"],' +
+        'textarea[name="' + inputName + '"],' +
+        'select[name="' + inputName + '"]'
+    );
+}

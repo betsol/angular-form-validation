@@ -12,6 +12,10 @@
             'formValidationDecorations', 'formValidationErrors',
             registrationService
         ])
+        .service('formValidationHelper', [
+            'formValidationDecorations', 'formValidationErrors',
+            helperService
+        ])
         .directive('input',    formValidationDirectiveSpecification)
         .directive('textarea', formValidationDirectiveSpecification)
         .directive('select',   formValidationDirectiveSpecification)
@@ -103,6 +107,16 @@
                 this.validationForced = validationForced;
             };
         }
+    }
+
+    function helperService(formValidationDecorations, formValidationErrors)
+    {
+        return {
+            showErrors: function(formName, ngModel, errorMessages, temp) {
+                formValidationDecorations.decorateElement(formName, ngModel, false, temp);
+                formValidationErrors.renderErrorList(formName, ngModel.$name, errorMessages, temp);
+            }
+        };
     }
 
     // @@include('decorations/provider.js')
