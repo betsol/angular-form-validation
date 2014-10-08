@@ -1,4 +1,4 @@
-# angular-form-validation 1.0.1
+# angular-form-validation 1.0.2
 
 ## Description
 
@@ -32,7 +32,8 @@ your application will automatically benefit from it.
 
 ### Dependencies
 
-This library requires [`angular-input-modified`][github-input-modified] module. It is used to detect modified input fields.
+This library requires [`angular-input-modified`][github-input-modified] module.
+It is used to detect modified input fields.
 
 ### Install library with bower
 
@@ -131,7 +132,7 @@ THE SOFTWARE.
 [so-ask]: http://stackoverflow.com/questions/ask?tags=angularjs,javascript
 [email]: mailto:s.fomin@betsol.ru
 [jsfiddle]: http://jsfiddle.net/
-[github-input-modified]: ~
+[github-input-modified]: //github.com/betsol/angular-input-modified
 [docs-api]: docs/api.md
 [demo]: ~
 [new-issue]: issues/new
