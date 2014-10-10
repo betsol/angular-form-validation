@@ -66,6 +66,13 @@ However, in order to unleash it's full potential, you should provide additional
 configurations through exposed providers. Please see [the API documentation][docs-api] in order
 to understand how to do this. It's written for real humans!
 
+### Important requirements
+
+In order for this module to work, you must have semantically correct HTML form, i.e.
+all your `input` elements must be placed inside of a `form` element.
+
+Also, all your `form` and `input` elements must have a `name` attributes with unique value.
+
 ### Using Bootstrap 3
 
 @todo
