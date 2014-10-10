@@ -65,7 +65,13 @@ function ClassNameDecorator() {
          * @param {boolean} valid
          */
         decorateElement: function($inputElement, valid) {
+
             var $decoratedElement = this.getDecoratedElement($inputElement);
+            if (null === $decoratedElement) {
+                console.log('Missing decorated element for input element', $inputElement);
+                return;
+            }
+
             if (valid) {
                 $decoratedElement
                     .removeClass(invalidClassName)
@@ -85,7 +91,14 @@ function ClassNameDecorator() {
          * @param {jQuery} $inputElement
          */
         clearDecorations: function($inputElement) {
-            this.getDecoratedElement($inputElement)
+
+            var $decoratedElement = this.getDecoratedElement($inputElement);
+            if (null === $decoratedElement) {
+                console.log('Missing decorated element for input element', $inputElement);
+                return;
+            }
+
+            $decoratedElement
                 .removeClass(invalidClassName)
                 .removeClass(validClassName)
             ;

@@ -4,6 +4,7 @@
  * @constructor
  */
 function DefaultErrorListRenderer() {
+
     return {
         listClassName: 'error-list',
         listElementType: 'ul',
@@ -15,7 +16,6 @@ function DefaultErrorListRenderer() {
          * Cached RegExp object to extracts constraint name from class name.
          */
         listItemConstraintRegExp: null,
-
 
         /**
          * Renders error list of specified constraints inside of a specified container.
@@ -90,6 +90,7 @@ function DefaultErrorListRenderer() {
          * @param {boolean} temp
          */
         renderErrorItems: function($listElement, errorList, temp) {
+
             var self = this;
 
             // Removing all temporary items from the list first.
@@ -97,7 +98,8 @@ function DefaultErrorListRenderer() {
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(this.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
+
+                var $listItem = angular.element(listItem);
 
                 var className = $listItem.attr('class');
 
@@ -136,7 +138,7 @@ function DefaultErrorListRenderer() {
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(self.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
+                var $listItem = angular.element(listItem);
                 if ($listItem.hasClass(self.listItemTemporaryClassName)) {
                     // Removing list item if it's temporary.
                     self.removeListItem($listItem);
@@ -169,8 +171,24 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery|null}
          */
         getListElement: function($container) {
-            var $listElement = $container.find(this.listElementType + '.' + this.listClassName);
-            return ($listElement.length > 0 ? $listElement : null);
+
+            var listElement = getElementByTagAndClassName(
+                this.listElementType,
+                this.listClassName,
+                $container[0]
+            );
+
+            return (listElement ? angular.element(listElement) : null);
+        },
+
+        /**
+         * Decorates specified list element.
+         * Override this to decorate error list element to your taste!
+         *
+         * @param {jQuery} $listElement
+         */
+        listElementDecorator: function($listElement) {
+            // Do nothing.
         },
 
         /**
@@ -180,9 +198,14 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery}
          */
         createListElement: function($container) {
-            var $listElement = $('<' + this.listElementType + '>')
+            var $listElement = angular.element(document.createElement(this.listElementType))
                 .addClass(this.listClassName)
             ;
+
+            // Calling decorator to decorate list element
+            // before it will be appended to the DOM.
+            this.listElementDecorator($listElement);
+
             $container.append($listElement);
             return $listElement;
         },
@@ -224,15 +247,19 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery|null}
          */
         getExistingListItem: function($listElement, constraint) {
-            var $listItem = $listElement.find(
-                this.listItemElementType + '.' + this.getListItemClassName(constraint)
+
+            var listItem = getElementByTagAndClassName(
+                this.listItemElementType,
+                this.getListItemClassName(constraint),
+                $listElement[0]
             );
-            return ($listItem.length > 0 ? $listItem : null);
+
+            return (listItem ? angular.element(listItem) : null);
         },
 
         /**
-         * Decorates list item.
-         * Can be overloaded by end-user to customize error rendering.
+         * Decorates specified error list item.
+         * Override this to decorate error list item to your taste!
          *
          * @param {jQuery} $listItem
          */
@@ -251,8 +278,8 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery}
          */
         createListItem: function($listElement, constraint, message, temp) {
-            // Creating element for list item.
-            var $listItem = $('<' + this.listItemElementType + '>')
+
+            var $listItem = angular.element(document.createElement(this.listItemElementType))
                 .addClass(this.getListItemClassName(constraint))
                 .html(message)
             ;

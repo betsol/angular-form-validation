@@ -11,7 +11,7 @@ function isObjectEmpty(object)
         throw new Error('Object must be specified.');
     }
 
-    if ('undefined' !== Object.keys) {
+    if ('undefined' !== typeof Object.keys) {
         // Using ECMAScript 5 feature.
         return (Object.keys(object).length === 0);
     } else {
@@ -32,12 +32,21 @@ function isObjectEmpty(object)
  */
 function hideElement($element)
 {
-    if ('undefined' !== $element.hide) {
+    // No need to hide empty jQuery object.
+    if (0 == $element.length) {
+        return;
+    }
+
+    if ('undefined' !== typeof $element.hide) {
+
         $element.hide();
+
     } else {
 
+        var elementComputedStyle = window.getComputedStyle($element[0], null);
+
         // Saving old display mode.
-        $element.data('oldDisplayMode', $element.css('display'));
+        $element.data('oldDisplayMode', elementComputedStyle.display);
 
         // Hiding the element.
         $element.css('display', 'none');
@@ -51,8 +60,15 @@ function hideElement($element)
  */
 function showElement($element)
 {
-    if ('undefined' !== $element.show) {
+    // No need to show empty jQuery object.
+    if (0 == $element.length) {
+        return;
+    }
+
+    if ('undefined' !== typeof $element.show) {
+
         $element.show();
+
     } else {
 
         var displayMode = $element.data('oldDisplayMode');
@@ -80,4 +96,26 @@ function getInputByName(formName, inputName)
         'textarea[name="' + inputName + '"],' +
         'select[name="' + inputName + '"]'
     );
+}
+
+/**
+ * Returns first matched element by specified tag and class name.
+ *
+ * @param {string} tagName
+ * @param {string} className
+ */
+function getElementByTagAndClassName(tagName, className, rootElement)
+{
+    if ('undefined' === typeof rootElement) {
+        rootElement = document;
+    }
+
+    var $foundElement = null;
+    angular.forEach(rootElement.getElementsByTagName(tagName), function(element) {
+        var $element = angular.element(element);
+        if ($element.hasClass(className)) {
+            $foundElement = $element;
+        }
+    });
+    return $foundElement;
 }

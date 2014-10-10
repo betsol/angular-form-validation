@@ -8,7 +8,46 @@ function errorsProvider() {
     var traverser;
     var language;
     var dictionary;
-    var errorListRenderer;
+
+    var builtInErrorListRenderers = {
+        default: DefaultErrorListRenderer,
+        bootstrap: BootstrapErrorListRenderer
+    };
+
+    var errorListRenderer = null;
+
+    /**
+     * Instructs directives to use one of built-in error list renderers:
+     *   - default   (Default renderer)
+     *   - bootstrap (Bootstrap 3)
+     *
+     * Returns error list renderer instance for optional customization.
+     *
+     * @param {string} rendererName
+     * @returns {object}
+     */
+    self.useBuiltInErrorListRenderer = function(rendererName) {
+        if ('undefined' === typeof builtInErrorListRenderers[rendererName]) {
+            throw new Error('Unknown built-in error list renderer requested: ' + rendererName + '.');
+        }
+        errorListRenderer = new builtInErrorListRenderers[rendererName]();
+
+        // Returning new renderer instance for optional customization.
+        return errorListRenderer;
+    };
+
+    /**
+     * Sets custom implementation of error list renderer.
+     *
+     * @param _errorListRenderer
+     */
+    self.setErrorListRenderer = function (_errorListRenderer) {
+
+        errorListRenderer = _errorListRenderer;
+
+        // Maintaining chainability.
+        return self;
+    };
 
     /**
      * Sets custom implementation of traverser.
@@ -16,6 +55,7 @@ function errorsProvider() {
      * @param {function} _traverser
      */
     self.useTraverser = function (_traverser) {
+
         // noinspection JSValidateTypes
         traverser = _traverser;
 
@@ -29,6 +69,7 @@ function errorsProvider() {
      * @param {string} _language  Language code
      */
     self.setLanguage = function (_language) {
+
         language = _language;
 
         // Maintaining chainability.
@@ -42,33 +83,11 @@ function errorsProvider() {
      * @returns {errorsProvider}
      */
     self.setDictionary = function (_dictionary) {
+
         dictionary = _dictionary;
 
         // Maintaining chainability.
         return self;
-    };
-
-    /**
-     * Sets custom implementation of error list renderer.
-     *
-     * @param _errorListRenderer
-     */
-    self.setErrorListRenderer = function (_errorListRenderer) {
-        errorListRenderer = _errorListRenderer;
-
-        // Maintaining chainability.
-        return self;
-    };
-
-    /**
-     * Returns current error list renderer.
-     * You can retrieve default renderer object and override it's
-     * properties and/or methods for customization.
-     *
-     * @returns {object}
-     */
-    self.getDefaultErrorListRenderer = function () {
-        return new DefaultErrorListRenderer();
     };
 
     /**
@@ -106,7 +125,7 @@ function errorsProvider() {
 
         if (!errorListRenderer) {
             // Using default error list renderer if it's not specified.
-            errorListRenderer = new DefaultErrorListRenderer();
+            self.useBuiltInErrorListRenderer('default');
         }
 
         return {
@@ -221,4 +240,5 @@ function defaultErrorsTraverser($element) {
 }
 
 // @@include('errors/renderers/default.js')
+// @@include('errors/renderers/bootstrap.js')
 // @@include('errors/dictionary.js')

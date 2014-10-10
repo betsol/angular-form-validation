@@ -1,5 +1,10 @@
 # angular-form-validation changelog
 
+## Version 1.0.3
+(10 October 2014)
+
+Not yet released.
+
 ## Version 1.0.2
 (08 October 2014)
 

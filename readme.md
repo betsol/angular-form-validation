@@ -1,4 +1,4 @@
-# angular-form-validation 1.0.2
+# angular-form-validation 1.0.3
 
 ## Description
 

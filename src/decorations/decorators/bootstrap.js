@@ -1,4 +1,6 @@
 /**
+ * Input decorator for Bootstrap 3.
+ *
  * @constructor
  * @extends ClassNameDecorator
  */
@@ -11,7 +13,7 @@ function BootstrapDecorator() {
     var iconClassName = 'form-control-feedback';
     var formGroupClassName = 'form-group';
 
-    var iconLibrary = 'glyphicon';
+    var iconLibrary = 'glyphicons';
     var useIcons = true;
     var iconClasses = {
         glyphicons: {
@@ -24,8 +26,32 @@ function BootstrapDecorator() {
         }
     };
 
+    /**
+     * Returns parent element for the specified element by specified class name.
+     *
+     * @param {jQuery} $element
+     * @param {string} className
+     * @returns {jQuery|null}
+     */
+    var getParentByClassName = function($element, className) {
+        while (true) {
+            var parent = $element.parent();
+            if (parent.hasClass(className)) {
+                return parent;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * This traverser will walk from the input element
+     * up to the form group element and return it.
+     *
+     * @param $inputElement
+     * @returns {jQuery|null}
+     */
     var formGroupTraverser = function($inputElement) {
-        return $inputElement.parents('.' + formGroupClassName);
+        return getParentByClassName($inputElement, formGroupClassName);
     };
 
     var iconValidClassName;
@@ -126,8 +152,7 @@ function BootstrapDecorator() {
          * @returns {jQuery|null}
          */
         getExistingIconElement: function($container) {
-            var $iconElement = $container.find(iconElementType + '.' + iconClassName);
-            return ($iconElement.length > 0 ? $iconElement : null);
+            return getElementByTagAndClassName(iconElementType, iconClassName, $container[0]);
         },
 
         /**
@@ -138,9 +163,9 @@ function BootstrapDecorator() {
          * @returns {jQuery}
          */
         createIconElement: function($container) {
-            var $iconElement = $('<' + iconElementType + '>')
-                    .addClass(iconClassName)
-                ;
+            var $iconElement = angular.element(document.createElement(iconElementType))
+                .addClass(iconClassName)
+            ;
             $container.append($iconElement);
             return $iconElement;
         },
@@ -176,13 +201,18 @@ function BootstrapDecorator() {
          * @param {boolean} valid
          */
         decorateElement: function($inputElement, valid) {
+
             // Calling parent function.
             classNameDecorator.decorateElement.apply(this, arguments);
 
-            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
-
             // Decorating icons.
             if (useIcons) {
+
+                var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+                if (null === $decoratedElement) {
+                    console.log('Missing decorated element for input element', $inputElement);
+                    return;
+                }
 
                 // Making sure class is present for container.
                 $decoratedElement.addClass(elementClassName);
@@ -211,9 +241,19 @@ function BootstrapDecorator() {
          * @param {jQuery} $inputElement
          */
         clearDecorations: function($inputElement) {
+
+            // Clearing class name decorations.
             classNameDecorator.clearDecorations.apply(this, arguments);
-            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+
+            // Clearing icons decorations if icons are used.
             if (useIcons) {
+
+                var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+                if (null === $decoratedElement) {
+                    console.log('Missing decorated element for input element', $inputElement);
+                    return;
+                }
+
                 var $iconElement = this.getExistingIconElement($decoratedElement);
                 if ($iconElement) {
                     this.hideIconElement($iconElement);
