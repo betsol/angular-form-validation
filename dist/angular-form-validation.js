@@ -324,7 +324,13 @@ function ClassNameDecorator() {
          * @param {boolean} valid
          */
         decorateElement: function($inputElement, valid) {
+
             var $decoratedElement = this.getDecoratedElement($inputElement);
+            if (null === $decoratedElement) {
+                console.log('Missing decorated element for input element', $inputElement);
+                return;
+            }
+
             if (valid) {
                 $decoratedElement
                     .removeClass(invalidClassName)
@@ -344,7 +350,14 @@ function ClassNameDecorator() {
          * @param {jQuery} $inputElement
          */
         clearDecorations: function($inputElement) {
-            this.getDecoratedElement($inputElement)
+
+            var $decoratedElement = this.getDecoratedElement($inputElement);
+            if (null === $decoratedElement) {
+                console.log('Missing decorated element for input element', $inputElement);
+                return;
+            }
+
+            $decoratedElement
                 .removeClass(invalidClassName)
                 .removeClass(validClassName)
             ;
@@ -352,6 +365,8 @@ function ClassNameDecorator() {
     };
 }
 /**
+ * Input decorator for Bootstrap 3.
+ *
  * @constructor
  * @extends ClassNameDecorator
  */
@@ -364,7 +379,7 @@ function BootstrapDecorator() {
     var iconClassName = 'form-control-feedback';
     var formGroupClassName = 'form-group';
 
-    var iconLibrary = 'glyphicon';
+    var iconLibrary = 'glyphicons';
     var useIcons = true;
     var iconClasses = {
         glyphicons: {
@@ -377,8 +392,32 @@ function BootstrapDecorator() {
         }
     };
 
+    /**
+     * Returns parent element for the specified element by specified class name.
+     *
+     * @param {jQuery} $element
+     * @param {string} className
+     * @returns {jQuery|null}
+     */
+    var getParentByClassName = function($element, className) {
+        while (true) {
+            var parent = $element.parent();
+            if (parent.hasClass(className)) {
+                return parent;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * This traverser will walk from the input element
+     * up to the form group element and return it.
+     *
+     * @param $inputElement
+     * @returns {jQuery|null}
+     */
     var formGroupTraverser = function($inputElement) {
-        return $inputElement.parents('.' + formGroupClassName);
+        return getParentByClassName($inputElement, formGroupClassName);
     };
 
     var iconValidClassName;
@@ -479,8 +518,7 @@ function BootstrapDecorator() {
          * @returns {jQuery|null}
          */
         getExistingIconElement: function($container) {
-            var $iconElement = $container.find(iconElementType + '.' + iconClassName);
-            return ($iconElement.length > 0 ? $iconElement : null);
+            return getElementByTagAndClassName(iconElementType, iconClassName, $container[0]);
         },
 
         /**
@@ -491,9 +529,9 @@ function BootstrapDecorator() {
          * @returns {jQuery}
          */
         createIconElement: function($container) {
-            var $iconElement = $('<' + iconElementType + '>')
-                    .addClass(iconClassName)
-                ;
+            var $iconElement = angular.element(document.createElement(iconElementType))
+                .addClass(iconClassName)
+            ;
             $container.append($iconElement);
             return $iconElement;
         },
@@ -529,13 +567,18 @@ function BootstrapDecorator() {
          * @param {boolean} valid
          */
         decorateElement: function($inputElement, valid) {
+
             // Calling parent function.
             classNameDecorator.decorateElement.apply(this, arguments);
 
-            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
-
             // Decorating icons.
             if (useIcons) {
+
+                var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+                if (null === $decoratedElement) {
+                    console.log('Missing decorated element for input element', $inputElement);
+                    return;
+                }
 
                 // Making sure class is present for container.
                 $decoratedElement.addClass(elementClassName);
@@ -564,9 +607,19 @@ function BootstrapDecorator() {
          * @param {jQuery} $inputElement
          */
         clearDecorations: function($inputElement) {
+
+            // Clearing class name decorations.
             classNameDecorator.clearDecorations.apply(this, arguments);
-            var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+
+            // Clearing icons decorations if icons are used.
             if (useIcons) {
+
+                var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
+                if (null === $decoratedElement) {
+                    console.log('Missing decorated element for input element', $inputElement);
+                    return;
+                }
+
                 var $iconElement = this.getExistingIconElement($decoratedElement);
                 if ($iconElement) {
                     this.hideIconElement($iconElement);
@@ -589,7 +642,46 @@ function errorsProvider() {
     var traverser;
     var language;
     var dictionary;
-    var errorListRenderer;
+
+    var builtInErrorListRenderers = {
+        default: DefaultErrorListRenderer,
+        bootstrap: BootstrapErrorListRenderer
+    };
+
+    var errorListRenderer = null;
+
+    /**
+     * Instructs directives to use one of built-in error list renderers:
+     *   - default   (Default renderer)
+     *   - bootstrap (Bootstrap 3)
+     *
+     * Returns error list renderer instance for optional customization.
+     *
+     * @param {string} rendererName
+     * @returns {object}
+     */
+    self.useBuiltInErrorListRenderer = function(rendererName) {
+        if ('undefined' === typeof builtInErrorListRenderers[rendererName]) {
+            throw new Error('Unknown built-in error list renderer requested: ' + rendererName + '.');
+        }
+        errorListRenderer = new builtInErrorListRenderers[rendererName]();
+
+        // Returning new renderer instance for optional customization.
+        return errorListRenderer;
+    };
+
+    /**
+     * Sets custom implementation of error list renderer.
+     *
+     * @param _errorListRenderer
+     */
+    self.setErrorListRenderer = function (_errorListRenderer) {
+
+        errorListRenderer = _errorListRenderer;
+
+        // Maintaining chainability.
+        return self;
+    };
 
     /**
      * Sets custom implementation of traverser.
@@ -597,6 +689,7 @@ function errorsProvider() {
      * @param {function} _traverser
      */
     self.useTraverser = function (_traverser) {
+
         // noinspection JSValidateTypes
         traverser = _traverser;
 
@@ -610,6 +703,7 @@ function errorsProvider() {
      * @param {string} _language  Language code
      */
     self.setLanguage = function (_language) {
+
         language = _language;
 
         // Maintaining chainability.
@@ -623,33 +717,11 @@ function errorsProvider() {
      * @returns {errorsProvider}
      */
     self.setDictionary = function (_dictionary) {
+
         dictionary = _dictionary;
 
         // Maintaining chainability.
         return self;
-    };
-
-    /**
-     * Sets custom implementation of error list renderer.
-     *
-     * @param _errorListRenderer
-     */
-    self.setErrorListRenderer = function (_errorListRenderer) {
-        errorListRenderer = _errorListRenderer;
-
-        // Maintaining chainability.
-        return self;
-    };
-
-    /**
-     * Returns current error list renderer.
-     * You can retrieve default renderer object and override it's
-     * properties and/or methods for customization.
-     *
-     * @returns {object}
-     */
-    self.getDefaultErrorListRenderer = function () {
-        return new DefaultErrorListRenderer();
     };
 
     /**
@@ -664,7 +736,7 @@ function errorsProvider() {
         angular.forEach(constraints, function(invalid, name) {
             if (invalid) {
                 var parameters;
-                if (constraintParameters[name]) {
+                if (name in constraintParameters) {
                     parameters = [constraintParameters[name]];
                 }
                 errorList[name] = dictionary.getString(name, parameters, language);
@@ -687,7 +759,7 @@ function errorsProvider() {
 
         if (!errorListRenderer) {
             // Using default error list renderer if it's not specified.
-            errorListRenderer = new DefaultErrorListRenderer();
+            self.useBuiltInErrorListRenderer('default');
         }
 
         return {
@@ -807,6 +879,7 @@ function defaultErrorsTraverser($element) {
  * @constructor
  */
 function DefaultErrorListRenderer() {
+
     return {
         listClassName: 'error-list',
         listElementType: 'ul',
@@ -818,7 +891,6 @@ function DefaultErrorListRenderer() {
          * Cached RegExp object to extracts constraint name from class name.
          */
         listItemConstraintRegExp: null,
-
 
         /**
          * Renders error list of specified constraints inside of a specified container.
@@ -893,6 +965,7 @@ function DefaultErrorListRenderer() {
          * @param {boolean} temp
          */
         renderErrorItems: function($listElement, errorList, temp) {
+
             var self = this;
 
             // Removing all temporary items from the list first.
@@ -900,7 +973,8 @@ function DefaultErrorListRenderer() {
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(this.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
+
+                var $listItem = angular.element(listItem);
 
                 var className = $listItem.attr('class');
 
@@ -939,7 +1013,7 @@ function DefaultErrorListRenderer() {
 
             // Iterating over list items and removing no longer needed ones.
             angular.forEach(self.getExistingListItems($listElement), function(listItem) {
-                var $listItem = $(listItem);
+                var $listItem = angular.element(listItem);
                 if ($listItem.hasClass(self.listItemTemporaryClassName)) {
                     // Removing list item if it's temporary.
                     self.removeListItem($listItem);
@@ -972,8 +1046,24 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery|null}
          */
         getListElement: function($container) {
-            var $listElement = $container.find(this.listElementType + '.' + this.listClassName);
-            return ($listElement.length > 0 ? $listElement : null);
+
+            var listElement = getElementByTagAndClassName(
+                this.listElementType,
+                this.listClassName,
+                $container[0]
+            );
+
+            return (listElement ? angular.element(listElement) : null);
+        },
+
+        /**
+         * Decorates specified list element.
+         * Override this to decorate error list element to your taste!
+         *
+         * @param {jQuery} $listElement
+         */
+        listElementDecorator: function($listElement) {
+            // Do nothing.
         },
 
         /**
@@ -983,9 +1073,14 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery}
          */
         createListElement: function($container) {
-            var $listElement = $('<' + this.listElementType + '>')
+            var $listElement = angular.element(document.createElement(this.listElementType))
                 .addClass(this.listClassName)
             ;
+
+            // Calling decorator to decorate list element
+            // before it will be appended to the DOM.
+            this.listElementDecorator($listElement);
+
             $container.append($listElement);
             return $listElement;
         },
@@ -1027,15 +1122,19 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery|null}
          */
         getExistingListItem: function($listElement, constraint) {
-            var $listItem = $listElement.find(
-                this.listItemElementType + '.' + this.getListItemClassName(constraint)
+
+            var listItem = getElementByTagAndClassName(
+                this.listItemElementType,
+                this.getListItemClassName(constraint),
+                $listElement[0]
             );
-            return ($listItem.length > 0 ? $listItem : null);
+
+            return (listItem ? angular.element(listItem) : null);
         },
 
         /**
-         * Decorates list item.
-         * Can be overloaded by end-user to customize error rendering.
+         * Decorates specified error list item.
+         * Override this to decorate error list item to your taste!
          *
          * @param {jQuery} $listItem
          */
@@ -1054,8 +1153,8 @@ function DefaultErrorListRenderer() {
          * @returns {jQuery}
          */
         createListItem: function($listElement, constraint, message, temp) {
-            // Creating element for list item.
-            var $listItem = $('<' + this.listItemElementType + '>')
+
+            var $listItem = angular.element(document.createElement(this.listItemElementType))
                 .addClass(this.getListItemClassName(constraint))
                 .html(message)
             ;
@@ -1112,6 +1211,39 @@ function DefaultErrorListRenderer() {
             return (this.listItemClassNamePrefix + constraint);
         }
     };
+}
+/**
+ * Error list renderer for Bootstrap 3.
+ *
+ * @constructor
+ * @extends DefaultErrorListRenderer
+ */
+function BootstrapErrorListRenderer() {
+
+    // Instantiating default renderer to extend it.
+    var defaultRenderer = new DefaultErrorListRenderer();
+
+    defaultRenderer.listElementType = 'div';
+    defaultRenderer.listItemElementType = 'span';
+
+    // Extension of default renderer.
+    var bootstrapRenderer = {
+
+        listItemClassName: 'help-block',
+
+        /**
+         * Decorates list item.
+         *
+         * @param {jQuery} $listItem
+         */
+        listItemDecorator: function($listItem) {
+            $listItem.addClass(this.listItemClassName);
+        }
+
+    };
+
+    // Creating a final instance by extending default renderer with bootstrap one.
+    return angular.extend({}, defaultRenderer, bootstrapRenderer);
 }
 function LanguageStringDictionary()
 {
@@ -1262,7 +1394,7 @@ function isObjectEmpty(object)
         throw new Error('Object must be specified.');
     }
 
-    if ('undefined' !== Object.keys) {
+    if ('undefined' !== typeof Object.keys) {
         // Using ECMAScript 5 feature.
         return (Object.keys(object).length === 0);
     } else {
@@ -1283,12 +1415,28 @@ function isObjectEmpty(object)
  */
 function hideElement($element)
 {
-    if ('undefined' !== $element.hide) {
+    // No need to hide empty jQuery object.
+    if (0 == $element.length) {
+        return;
+    }
+
+    if ('undefined' !== typeof $element.hide) {
+
         $element.hide();
+
     } else {
 
+        var elementComputedStyle = window.getComputedStyle($element[0], null);
+
+        var displayMode = elementComputedStyle.display;
+
+        // No need to hide already hidden element.
+        if ('none' === displayMode) {
+            return;
+        }
+
         // Saving old display mode.
-        $element.data('oldDisplayMode', $element.css('display'));
+        $element.data('oldDisplayMode', displayMode);
 
         // Hiding the element.
         $element.css('display', 'none');
@@ -1302,8 +1450,15 @@ function hideElement($element)
  */
 function showElement($element)
 {
-    if ('undefined' !== $element.show) {
+    // No need to show empty jQuery object.
+    if (0 == $element.length) {
+        return;
+    }
+
+    if ('undefined' !== typeof $element.show) {
+
         $element.show();
+
     } else {
 
         var displayMode = $element.data('oldDisplayMode');
@@ -1332,5 +1487,28 @@ function getInputByName(formName, inputName)
         'select[name="' + inputName + '"]'
     );
 }
+
+/**
+ * Returns first matched element by specified tag and class name.
+ *
+ * @param {string} tagName
+ * @param {string} className
+ */
+function getElementByTagAndClassName(tagName, className, rootElement)
+{
+    if ('undefined' === typeof rootElement) {
+        rootElement = document;
+    }
+
+    var $foundElement = null;
+    angular.forEach(rootElement.getElementsByTagName(tagName), function(element) {
+        var $element = angular.element(element);
+        if ($element.hasClass(className)) {
+            $foundElement = $element;
+        }
+    });
+    return $foundElement;
+}
+
 
 })(window, angular);

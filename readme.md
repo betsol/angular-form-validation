@@ -16,7 +16,7 @@ your application will automatically benefit from it.
 
 - Works out of the box with almost zero configuration
 - No need to specify any additional directives besides standard input constraints
-- Has built-in supports for **Bootstrap 3**, see the *"Using Bootstrap 3"* section
+- Has built-in supports for **Bootstrap 3**, see the [Using Bootstrap 3](#using-bootstrap-3) section
 - Automatically decorates *valid*, *invalid* and *non-modified* input fields
 - Automatically adds error messages to invalid input fields
 - Supports translations (i18n) and provides some [built-in languages][built-in-languages]
@@ -27,6 +27,11 @@ your application will automatically benefit from it.
   by providing your own implementation of them
 - You can change the way error list is rendered by modifying default error list renderer or
   by providing your own implementation
+- *jQuery* is not required since version `1.0.3`
+  
+### Demo
+
+Feel free to play with the [Demo](http://plnkr.co/edit/dJs5Wye2WEy7T6gEEfIj?p=preview).
 
 ## Installation
 
@@ -71,18 +76,48 @@ to understand how to do this. It's written for real humans!
 In order for this module to work, you must have semantically correct HTML form, i.e.
 all your `input` elements must be placed inside of a `form` element.
 
-Also, all your `form` and `input` elements must have a `name` attributes with unique value.
+Also, all your `form` and `input` elements must have a `name` attributes with unique values.
 
 ### Using Bootstrap 3
 
-@todo
+This module provides *Bootstrap 3* support out of the box.
 
-If you are going to use this module with default incarnation of Twitter's Bootstrap 3 you
-can do this very easily with just the following steps:
+Just add the following code to your project:
 
-- 1
-- 2
-- 3
+```JavaScript
+module
+
+    // ...
+    
+    .config([
+        'formValidationDecorationsProvider',
+        'formValidationErrorsProvider',
+        function(
+            formValidationDecorationsProvider,
+            formValidationErrorsProvider
+        ) {
+            formValidationDecorationsProvider
+                .useBuiltInDecorator('bootstrap')
+            ;
+            formValidationErrorsProvider
+                .useBuiltInErrorListRenderer('bootstrap')
+            ;
+        }
+    ])
+    
+    // ...
+    
+;
+```
+
+And if you want to use *fontawesome* icon library instead of *glyphicons* (default):
+
+```JavaScript
+formValidationDecorationsProvider
+    .useBuiltInDecorator('bootstrap')
+        .useIconLibrary('fontawesome')
+;
+```
 
 ## API
 
@@ -105,8 +140,8 @@ in this GitHub repository.
 
 If you have a question - file it with [StackOverflow][so-ask] and send me a
 link to [s.fomin@betsol.ru][email]. I will be glad to help.
-Also, please add a [JSFiddle][jsfiddle] to demonstrate the issue if appropriate.
-You can even fork our [demo fiddle][demo].
+Also, please create a [plunk][plunker] to demonstrate the issue if appropriate.
+You can even fork our [demo plunk][demo].
 
 Have any ideas or propositions? Feel free to contact me by [E-Mail][email].
 
@@ -138,9 +173,9 @@ THE SOFTWARE.
 
 [so-ask]: http://stackoverflow.com/questions/ask?tags=angularjs,javascript
 [email]: mailto:s.fomin@betsol.ru
-[jsfiddle]: http://jsfiddle.net/
+[plunker]: http://plnkr.co/
 [github-input-modified]: //github.com/betsol/angular-input-modified
 [docs-api]: docs/api.md
-[demo]: ~
+[demo]: http://plnkr.co/edit/dJs5Wye2WEy7T6gEEfIj?p=preview
 [new-issue]: issues/new
 [built-in-languages]: docs/api/errors-provider.md#supported-languages

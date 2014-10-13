@@ -1,9 +1,14 @@
 # angular-form-validation changelog
 
 ## Version 1.0.3
-(10 October 2014)
+(13 October 2014)
 
-Not yet released.
+- Removed jQuery dependency
+- Fixed a bug when error messages were not displayed correctly for some constraints
+- Improved *Bootstrap 3* support
+- Updated README
+- Done some refactoring
+- Replaced `gulp-clean` in build process
 
 ## Version 1.0.2
 (08 October 2014)

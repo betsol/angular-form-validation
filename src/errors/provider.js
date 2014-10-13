@@ -102,7 +102,7 @@ function errorsProvider() {
         angular.forEach(constraints, function(invalid, name) {
             if (invalid) {
                 var parameters;
-                if (constraintParameters[name]) {
+                if (name in constraintParameters) {
                     parameters = [constraintParameters[name]];
                 }
                 errorList[name] = dictionary.getString(name, parameters, language);

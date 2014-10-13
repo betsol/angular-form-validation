@@ -1,17 +1,15 @@
-var gulp = require('gulp');
-var clean = require('gulp-clean');
+var del         = require('del');
+var gulp        = require('gulp');
 var fileinclude = require('gulp-file-include');
-var rename = require('gulp-rename');
-var uglify = require('gulp-uglify');
-var gutil = require('gulp-util');
+var rename      = require('gulp-rename');
+var uglify      = require('gulp-uglify');
+var gutil       = require('gulp-util');
 
-gulp.task('clean', function () {
-    gulp.src('dist/', { read: false })
-        .pipe(clean())
-    ;
+gulp.task('clean', function (callback) {
+    del(['dist'], callback);
 });
 
-gulp.task('default', function () {
+gulp.task('build', function () {
     gulp.src('src/main.js')
         .pipe(fileinclude({
             prefix: '// @@'
@@ -24,3 +22,5 @@ gulp.task('default', function () {
         .on('error', gutil.log)
     ;
 });
+
+gulp.task('default', ['clean', 'build']);

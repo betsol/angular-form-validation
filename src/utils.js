@@ -45,8 +45,15 @@ function hideElement($element)
 
         var elementComputedStyle = window.getComputedStyle($element[0], null);
 
+        var displayMode = elementComputedStyle.display;
+
+        // No need to hide already hidden element.
+        if ('none' === displayMode) {
+            return;
+        }
+
         // Saving old display mode.
-        $element.data('oldDisplayMode', elementComputedStyle.display);
+        $element.data('oldDisplayMode', displayMode);
 
         // Hiding the element.
         $element.css('display', 'none');
