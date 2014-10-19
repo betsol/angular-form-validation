@@ -126,3 +126,33 @@ function getElementByTagAndClassName(tagName, className, rootElement)
     });
     return $foundElement;
 }
+
+/**
+ * Returns element with the specified class from the chain of parent elements of the specified element,
+ * or null if element is not found.
+ *
+ * @param {object} element
+ * @param {string} className
+ *
+ * @returns {object|null}
+ */
+function getParentElementByClassName(element, className) {
+
+    var $element = angular.element(element);
+
+    // Loop without formal condition.
+    while (true) {
+
+        $element = $element.parent();
+
+        if (0 === $element.length) {
+            // Reached top of the DOM tree, exiting with NULL.
+            return null;
+        }
+
+        if ($element.hasClass(className)) {
+            // Element found, returing it.
+            return $element;
+        }
+    }
+}

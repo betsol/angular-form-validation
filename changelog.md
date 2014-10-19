@@ -1,5 +1,11 @@
 # angular-form-validation changelog
 
+## Version 1.0.4
+(19 October 2014)
+
+- Fixed incorrect implementation of `formGroupTraverser` of *Bootstrap* decorator
+- Added `getParentElementByClassName()` function
+
 ## Version 1.0.3
 (13 October 2014)
 

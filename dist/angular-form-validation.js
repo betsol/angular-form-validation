@@ -393,23 +393,6 @@ function BootstrapDecorator() {
     };
 
     /**
-     * Returns parent element for the specified element by specified class name.
-     *
-     * @param {jQuery} $element
-     * @param {string} className
-     * @returns {jQuery|null}
-     */
-    var getParentByClassName = function($element, className) {
-        while (true) {
-            var parent = $element.parent();
-            if (parent.hasClass(className)) {
-                return parent;
-            }
-        }
-        return null;
-    };
-
-    /**
      * This traverser will walk from the input element
      * up to the form group element and return it.
      *
@@ -417,7 +400,7 @@ function BootstrapDecorator() {
      * @returns {jQuery|null}
      */
     var formGroupTraverser = function($inputElement) {
-        return getParentByClassName($inputElement, formGroupClassName);
+        return getParentElementByClassName($inputElement, formGroupClassName);
     };
 
     var iconValidClassName;
@@ -1508,6 +1491,36 @@ function getElementByTagAndClassName(tagName, className, rootElement)
         }
     });
     return $foundElement;
+}
+
+/**
+ * Returns element with the specified class from the chain of parent elements of the specified element,
+ * or null if element is not found.
+ *
+ * @param {object} element
+ * @param {string} className
+ *
+ * @returns {object|null}
+ */
+function getParentElementByClassName(element, className) {
+
+    var $element = angular.element(element);
+
+    // Loop without formal condition.
+    while (true) {
+
+        $element = $element.parent();
+
+        if (0 === $element.length) {
+            // Reached top of the DOM tree, exiting with NULL.
+            return null;
+        }
+
+        if ($element.hasClass(className)) {
+            // Element found, returing it.
+            return $element;
+        }
+    }
 }
 
 

@@ -27,23 +27,6 @@ function BootstrapDecorator() {
     };
 
     /**
-     * Returns parent element for the specified element by specified class name.
-     *
-     * @param {jQuery} $element
-     * @param {string} className
-     * @returns {jQuery|null}
-     */
-    var getParentByClassName = function($element, className) {
-        while (true) {
-            var parent = $element.parent();
-            if (parent.hasClass(className)) {
-                return parent;
-            }
-        }
-        return null;
-    };
-
-    /**
      * This traverser will walk from the input element
      * up to the form group element and return it.
      *
@@ -51,7 +34,7 @@ function BootstrapDecorator() {
      * @returns {jQuery|null}
      */
     var formGroupTraverser = function($inputElement) {
-        return getParentByClassName($inputElement, formGroupClassName);
+        return getParentElementByClassName($inputElement, formGroupClassName);
     };
 
     var iconValidClassName;
