@@ -12,6 +12,8 @@ function BootstrapDecorator() {
     var iconElementType = 'span';
     var iconClassName = 'form-control-feedback';
     var formGroupClassName = 'form-group';
+    var formGroupRadioClassName = 'radio';
+    var formGroupCheckboxClassName = 'checkbox';
 
     var iconLibrary = 'glyphicons';
     var useIcons = true;
@@ -25,6 +27,7 @@ function BootstrapDecorator() {
             invalid: 'fa fa-exclamation-circle'
         }
     };
+    var noIconElementTypes = ['checkbox', 'radio'];
 
     /**
      * This traverser will walk from the input element
@@ -34,7 +37,22 @@ function BootstrapDecorator() {
      * @returns {jQuery|null}
      */
     var formGroupTraverser = function($inputElement) {
-        return getParentElementByClassName($inputElement, formGroupClassName);
+
+        var $decoratedElement = null;
+
+        angular.forEach([
+            formGroupClassName,
+            formGroupCheckboxClassName,
+            formGroupRadioClassName
+        ], function(className) {
+            if (null === $decoratedElement) {
+                $decoratedElement = getParentElementByClassName(
+                    $inputElement, className
+                );
+            }
+        });
+
+        return $decoratedElement;
     };
 
     var iconValidClassName;
@@ -188,8 +206,14 @@ function BootstrapDecorator() {
             // Calling parent function.
             classNameDecorator.decorateElement.apply(this, arguments);
 
+            var elementType = $inputElement.attr('type');
+
+            var iconRequired = (
+                -1 === noIconElementTypes.indexOf(elementType)
+            );
+
             // Decorating icons.
-            if (useIcons) {
+            if (useIcons && iconRequired) {
 
                 var $decoratedElement = classNameDecorator.getDecoratedElement($inputElement);
                 if (null === $decoratedElement) {

@@ -1,5 +1,10 @@
 # angular-form-validation changelog
 
+## Version 1.0.5
+(23 October 2014)
+
+- Added better support for checkboxes when using *Bootstrap* decorator
+
 ## Version 1.0.4
 (19 October 2014)
 
