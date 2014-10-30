@@ -1,4 +1,4 @@
-# angular-form-validation 1.0.5
+# angular-form-validation 1.0.6
 
 ## Description
 
@@ -177,5 +177,5 @@ THE SOFTWARE.
 [github-input-modified]: //github.com/betsol/angular-input-modified
 [docs-api]: docs/api.md
 [demo]: http://plnkr.co/edit/dJs5Wye2WEy7T6gEEfIj?p=preview
-[new-issue]: issues/new
+[new-issue]: //github.com/betsol/angular-form-validation/issues/new
 [built-in-languages]: docs/api/errors-provider.md#supported-languages
