@@ -1,5 +1,12 @@
 # angular-form-validation changelog
 
+## Version 1.0.6
+(29 October 2014)
+
+- *AngularJS* `1.3` is now tested and supported
+- Updated README
+- Updated demo
+
 ## Version 1.0.5
 (23 October 2014)
 
