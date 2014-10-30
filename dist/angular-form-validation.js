@@ -30,12 +30,13 @@
     {
         return {
             restrict: 'E',
-            require: ['?ngModel', '^?form'],
+            require: ['?ngModel', '^^?form', '^?ngValidate'],
             priority: 10,
             link: function(scope, element, attrs, controllers) {
                 var ngModel = controllers[0];
                 var ngForm = controllers[1];
-                if (null !== ngModel && null !== ngForm) {
+                var ngValidate = controllers[2];
+                if (null !== ngModel && null !== ngForm && null !== ngValidate) {
                     formValidationRegistration
                         .register(scope, element, attrs, ngModel, ngForm)
                     ;
