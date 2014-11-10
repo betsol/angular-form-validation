@@ -33,6 +33,9 @@
             require: ['?ngModel', '^^?form', '^?ngValidate'],
             priority: 10,
             link: function(scope, element, attrs, controllers) {
+
+                console.log(scope, element, attrs, controllers);
+
                 var ngModel = controllers[0];
                 var ngForm = controllers[1];
                 var ngValidate = controllers[2];
