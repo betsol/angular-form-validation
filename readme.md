@@ -146,10 +146,10 @@ If you want to force validation on form as soon as controller is loaded, you sho
   }, 0);
 })
 
+```
+
 Using `$timeout` with zero interval makes sure, that our code is executed when
 compilation is complete and `$scope.form` is available.
-
-```
 
 ## Feedback
 
