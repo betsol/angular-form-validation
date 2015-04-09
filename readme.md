@@ -133,6 +133,24 @@ To counter this behavior functionality called "forced validation" was introduced
 
 When forced validation is enabled for an input element it **will be** decorated even if it's pristine.
 
+---
+
+If you want to force validation on form as soon as controller is loaded, you should use the following trick:
+
+```javascript
+
+.controller('DefaultController', function($scope, $timeout) {
+  // ...
+  $timeout(function () {
+    $scope.form.forceValidation(true);
+  }, 0);
+})
+
+Using `$timeout` with zero interval makes sure, that our code is executed when
+compilation is complete and `$scope.form` is available.
+
+```
+
 ## Feedback
 
 If you have found a bug or have another issue with the library - please [create an issue][new-issue]
