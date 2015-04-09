@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html ng-app="ExampleApp">
+
+<head>
+    <link rel="stylesheet" href="//rawgit.com/twbs/bootstrap/v3.3.0/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body ng-controller="DefaultController">
+
+    <h1>Editing User #{{ user.id }}</h1>
+
+    <form role="form" name="form" class="example-form" novalidate bs-validate>
+
+        <!-- User ID -->
+        <div class="form-group">
+            <label class="control-label" for="form-user-id">User ID</label>
+            <input
+                id="form-user-id"
+                name="userId"
+                class="form-control"
+                type="number"
+                ng-model="user.id"
+                readonly
+            >
+        </div>
+
+        <!-- E-Mail -->
+        <div class="form-group">
+            <label class="control-label" for="form-email">E-Mail Address</label>
+            <input
+                id="form-email"
+                name="email"
+                class="form-control"
+                type="email"
+                ng-model="user.email"
+                ng-minlength="3"
+                required
+            >
+        </div>
+
+        <!-- Name -->
+        <div class="form-group">
+            <label class="control-label" for="form-name">Name</label>
+            <input
+                id="form-name"
+                name="name"
+                class="form-control"
+                type="text"
+                ng-model="user.name"
+                required
+            >
+        </div>
+
+        <!-- Balance -->
+        <div class="form-group">
+            <label class="control-label" for="form-balance">Balance</label>
+            <input
+                id="form-balance"
+                name="balance"
+                class="form-control"
+                type="number"
+                ng-model="user.balance"
+                step="0.01"
+                min="0"
+                max="1000"
+                required
+            >
+        </div>
+
+
+        <!-- Checkboxes -->
+        <div>
+
+            <label>Flags</label>
+
+            <div class="checkbox">
+                <label class="control-label">
+                    <input type="checkbox" name="admin" ng-model="user.isAdmin">
+                    Administrator
+                </label>
+            </div>
+            <div class="checkbox">
+                <label class="control-label">
+                    <input type="checkbox" name="active" ng-model="user.isActive">
+                    Active
+                </label>
+            </div>
+        </div>
+
+
+        <p ng-show="!form.modified">
+            <em>Nothing to save or reset. Introduce some changes first!</em>
+        </p>
+
+        <p ng-show="form.$invalid">
+            <em>Can't save. Please correct form validation errors!</em>
+        </p>
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+            ng-disabled="!form.modified || form.$invalid"
+            ng-click="save()"
+        >Save</button>
+
+        <button
+            type="button"
+            class="btn btn-default"
+            ng-disabled="!form.modified"
+            ng-click="form.reset()"
+        >Reset</button>
+
+    </form>
+
+    <!-- Scripts -->
+    <script src="//rawgit.com/angular/bower-angular/v1.3.2/angular.js"></script>
+    <script src="//rawgit.com/betsol/angular-input-modified/master/dist/angular-input-modified.js"></script>
+    <script src="library/angular-form-validation.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>

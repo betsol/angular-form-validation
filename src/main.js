@@ -16,6 +16,15 @@
             'formValidationDecorations', 'formValidationErrors',
             helperService
         ])
+
+        .directive('bsValidate', function() {
+            return {
+                restrict: 'A',
+                controller: function() {
+                }
+            };
+        })
+
         .directive('input',    formValidationDirectiveSpecification)
         .directive('textarea', formValidationDirectiveSpecification)
         .directive('select',   formValidationDirectiveSpecification)
@@ -30,18 +39,18 @@
     {
         return {
             restrict: 'E',
-            require: ['?ngModel', '^^?form', '^?ngValidate'],
+            require: ['?ngModel', '^^?form', '^?bsValidate'],
             priority: 10,
-            link: function(scope, element, attrs, controllers) {
+            link: function($scope, element, attrs, controllers) {
 
-                console.log(scope, element, attrs, controllers);
+                console.log($scope, element, attrs, controllers);
 
                 var ngModel = controllers[0];
                 var ngForm = controllers[1];
                 var ngValidate = controllers[2];
                 if (null !== ngModel && null !== ngForm && null !== ngValidate) {
                     formValidationRegistration
-                        .register(scope, element, attrs, ngModel, ngForm)
+                        .register($scope, element, attrs, ngModel, ngForm)
                     ;
                 }
             }
